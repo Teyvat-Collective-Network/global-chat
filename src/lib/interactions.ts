@@ -1,6 +1,7 @@
 import { ApplicationCommandType, Colors, Events, InteractionEditReplyOptions, InteractionReplyOptions, TextChannel } from "discord.js";
 import bot from "./bot.js";
 import channel from "./commands/autocomplete/channel.js";
+import author from "./commands/handlers/author.js";
 import ban from "./commands/handlers/ban.js";
 import channelsCreate from "./commands/handlers/channels-create.js";
 import channelsDelete from "./commands/handlers/channels-delete.js";
@@ -17,6 +18,7 @@ import modsList from "./commands/handlers/mods-list.js";
 import modsRemove from "./commands/handlers/mods-remove.js";
 import nickname from "./commands/handlers/nickname.js";
 import panic from "./commands/handlers/panic.js";
+import purgeMessage from "./commands/handlers/purge-message.js";
 import unban from "./commands/handlers/unban.js";
 import unpanic from "./commands/handlers/unpanic.js";
 import cancel from "./components/cancel.js";
@@ -94,8 +96,21 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                             ? await panic(interaction)
                             : key === "unpanic"
                             ? await unpanic(interaction)
+                            : key === "purge/message"
+                            ? await purgeMessage(interaction, opts.getString("message", true))
+                            : key === "author"
+                            ? await author(interaction, opts.getString("message", true))
                             : undefined;
                 }
+            } else if (interaction.commandType === ApplicationCommandType.Message) {
+                const key = interaction.commandName;
+
+                response =
+                    key === "Purge"
+                        ? await purgeMessage(interaction, interaction.targetId)
+                        : key === "Get Author"
+                        ? await author(interaction, interaction.targetId)
+                        : undefined;
             }
         } else if (interaction.isAutocomplete()) {
             const opt = interaction.options.getFocused(true);

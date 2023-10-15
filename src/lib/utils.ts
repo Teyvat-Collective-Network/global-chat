@@ -11,6 +11,7 @@ import {
     WebhookMessageCreateOptions,
     WebhookMessageEditOptions,
 } from "discord.js";
+import { fstatSync, openSync } from "node:fs";
 import api from "./api.js";
 import bot from "./bot.js";
 import db from "./db.js";
@@ -62,8 +63,6 @@ export async function getWebhook(channel: TextChannel) {
         const webhooks = await channel.fetchWebhooks();
         const webhook = webhooks.first() ?? (await channel.createWebhook({ name: "TCN Global Chat" }));
 
-        await db.webhooks.updateOne({ id: webhook.id }, { $setOnInsert: { id: webhook.id } }, { upsert: true });
-
         return webhook;
     } catch {}
 }
@@ -71,16 +70,14 @@ export async function getWebhook(channel: TextChannel) {
 export async function constructMessage(
     message: Message,
     { channel, replyStyle, showServers, showTag }: GlobalConnection,
-): Promise<WebhookMessageCreateOptions & WebhookMessageEditOptions> {
-    const data: WebhookMessageCreateOptions & WebhookMessageEditOptions = {};
+): Promise<WebhookMessageCreateOptions> {
+    const data: WebhookMessageCreateOptions = {};
 
     if (message.content) data.content = message.content.slice(0, 2000);
 
     const attachments: AttachmentPayload[] = [];
 
-    for (const attachment of message.attachments.values()) {
-        attachments.push({ attachment: attachment.url, name: attachment.name });
-    }
+    for (const attachment of message.attachments.values()) attachments.push({ attachment: attachment.url, name: attachment.name });
 
     let failed = false;
 
@@ -90,11 +87,12 @@ export async function constructMessage(
         try {
             const path = await stickerCache.fetch(sticker);
             if (!path) throw 0;
+            if (fstatSync(openSync(path, "r")).size === 0) throw 0;
 
             attachments.push({ attachment: path, name: `${sticker.name}.${stickerCache.ext(sticker)}` });
         } catch (error) {
             failed = true;
-            logger.error(error, "870af069-c4a5-4f5a-b24d-6f76bd2c5690");
+            if (error !== 0) logger.error(error, "870af069-c4a5-4f5a-b24d-6f76bd2c5690");
         }
     }
 

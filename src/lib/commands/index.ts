@@ -341,36 +341,13 @@ export default [
                 options: [
                     {
                         type: ApplicationCommandOptionType.Subcommand,
-                        name: "user",
-                        description: "purge recent messages from a certain user",
-                        options: [
-                            {
-                                type: ApplicationCommandOptionType.User,
-                                name: "user",
-                                description: "the user whose messages to target",
-                                required: true,
-                            },
-                            {
-                                type: ApplicationCommandOptionType.Integer,
-                                name: "count",
-                                description: "the number of messages to target",
-                            },
-                            {
-                                type: ApplicationCommandOptionType.Integer,
-                                name: "minutes",
-                                description: "the number of minutes of messages to seek",
-                            },
-                        ],
-                    },
-                    {
-                        type: ApplicationCommandOptionType.Subcommand,
                         name: "message",
                         description: "force-purge a global chat message again",
                         options: [
                             {
                                 type: ApplicationCommandOptionType.String,
-                                name: "url",
-                                description: "the URL of any instance of the message to purge",
+                                name: "message",
+                                description: "the ID of the message to purge in your channel",
                                 required: true,
                             },
                         ],
@@ -384,8 +361,8 @@ export default [
                 options: [
                     {
                         type: ApplicationCommandOptionType.String,
-                        name: "url",
-                        description: "the URL of any instance of the message",
+                        name: "message",
+                        description: "the ID of any instance of the message",
                         required: true,
                     },
                 ],
@@ -400,11 +377,6 @@ export default [
     {
         type: ApplicationCommandType.Message,
         name: "Get Author",
-        dmPermission: false,
-    },
-    {
-        type: ApplicationCommandType.Message,
-        name: "Ban Author",
         dmPermission: false,
     },
 ] satisfies ApplicationCommandData[];

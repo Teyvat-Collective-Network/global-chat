@@ -8,14 +8,19 @@ import { constructMessage, fetchGuildName, fetchName, getConnection, getWebhook 
 
 bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
-    if (message.webhookId && (await db.webhooks.countDocuments({ id: message.webhookId })) >= 1) return;
+    if (message.webhookId) return;
 
     const id = await getConnection(message.channelId).catch();
     if (!id) return;
 
+    const doc = await db.connections.findOne({ id, guild: message.guildId! });
+    if (!doc) return;
+    if (doc?.suspended) return;
+
     await queue(Priority.RELAY, async () => {
         const channel = await db.channels.findOne({ id });
         if (!channel) return;
+        if (channel.panic) return;
         if (channel.bans.includes(message.author.id)) return await message.delete().catch();
 
         const source = await db.connections.findOne({ id, guild: message.guild!.id });
