@@ -5,8 +5,31 @@ import db from "./db.js";
 import logger from "./logger.js";
 import Priority from "./priority.js";
 import queue from "./queue.js";
-import { GlobalMessage } from "./types.js";
+import { GlobalChannel, GlobalMessage } from "./types.js";
 import { addProfile, constructMessage, log } from "./utils.js";
+
+export async function maybeFilter(channel: GlobalChannel, message: Message) {
+    if (channel.ignoreFilter || !message.content) return false;
+
+    const filters = await db.filter.find().toArray();
+
+    let match: string | undefined;
+
+    for (const filter of filters) {
+        match = message.content.match(new RegExp(filter.match))?.[0];
+        if (match) break;
+    }
+
+    if (!match) return false;
+
+    const toLog = await constructMessage(message, { replyStyle: "text", showServers: true, showTag: true, noReply: true });
+    toLog.content = `**[blocked]** ${toLog.content ?? ""}`.slice(0, 2000);
+    toLog.embeds = [{ title: "Blocked Term", description: match, color: 0x2b2d31 }, ...(toLog.embeds ?? [])].slice(0, 10);
+
+    await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
+    await message.delete().catch();
+    return true;
+}
 
 export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = false) {
     await queue(Priority.DELETE, async () => {

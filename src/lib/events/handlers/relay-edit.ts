@@ -1,5 +1,6 @@
 import { diffWords } from "diff";
 import { ChannelType, Events, MessageType } from "discord.js";
+import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
@@ -27,6 +28,8 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
         const source = await db.connections.findOne({ id: doc.id, guild: message.guildId! });
         if (!source) return;
         if (source.bans.includes(message.author.id)) return;
+
+        if (await maybeFilter(channel, message)) return;
 
         const connections = await db.connections.find({ id: doc.id, guild: { $ne: message.guildId! }, bans: { $ne: message.author.id } }).toArray();
 

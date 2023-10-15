@@ -6,6 +6,7 @@ export type GlobalChannel = {
     mods: string[];
     bans: string[];
     panic: boolean;
+    ignoreFilter: boolean;
 };
 
 export type GlobalConnection = {

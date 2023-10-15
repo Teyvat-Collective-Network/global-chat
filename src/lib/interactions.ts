@@ -49,6 +49,7 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                                   opts.getString("name", true),
                                   opts.getChannel("logs", true) as TextChannel,
                                   opts.getBoolean("public") ?? true,
+                                  opts.getBoolean("ignore-filter") ?? false,
                               )
                             : key === "channels/edit"
                             ? await channelsEdit(
@@ -57,6 +58,7 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                                   opts.getString("name"),
                                   opts.getChannel("logs") as TextChannel | null,
                                   opts.getBoolean("public"),
+                                  opts.getBoolean("ignore-filter"),
                               )
                             : key === "channels/delete"
                             ? await channelsDelete(interaction, opts.getInteger("channel", true))

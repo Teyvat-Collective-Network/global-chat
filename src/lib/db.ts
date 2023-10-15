@@ -31,8 +31,8 @@ class Collections {
         return _db.collection<GlobalMessage>("global_messages");
     }
 
-    public get webhooks() {
-        return _db.collection<{ id: string }>("global_webhooks");
+    public get filter() {
+        return _db.collection<{ match: string }>("global_filter");
     }
 }
 

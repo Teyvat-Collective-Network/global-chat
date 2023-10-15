@@ -170,7 +170,7 @@ export async function addProfile(
 ) {
     return {
         ...out,
-        avatarURL: user && user.displayAvatarURL(),
+        avatarURL: user?.displayAvatarURL(),
         username: `${await fetchName(user, showTag)} ${showServers ? `from ${guild ? await fetchGuildName(guild) : "unknown guild"}` : ""}`.trim().slice(0, 80),
     };
 }

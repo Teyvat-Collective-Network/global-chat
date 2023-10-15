@@ -38,6 +38,11 @@ export default [
                                 name: "public",
                                 description: "if false, only observers can connect to this channel (default: true)",
                             },
+                            {
+                                type: ApplicationCommandOptionType.Boolean,
+                                name: "ignore-filter",
+                                description: "if true, the global chat automod filter will not be applied (default: false)",
+                            },
                         ],
                     },
                     {
@@ -69,6 +74,11 @@ export default [
                                 type: ApplicationCommandOptionType.Boolean,
                                 name: "public",
                                 description: "if false, only observers can connect to this channel",
+                            },
+                            {
+                                type: ApplicationCommandOptionType.Boolean,
+                                name: "ignore-filter",
+                                description: "if true, the global chat automod filter will not be applied",
                             },
                         ],
                     },

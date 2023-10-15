@@ -1,4 +1,5 @@
 import { ChannelType, Events, MessageType } from "discord.js";
+import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
@@ -26,6 +27,8 @@ bot.on(Events.MessageCreate, async (message) => {
         const source = await db.connections.findOne({ id, guild: message.guild!.id });
         if (!source) return;
         if (source.bans.includes(message.author.id)) return await message.delete().catch();
+
+        if (await maybeFilter(channel, message)) return;
 
         if (message.flags.has("SuppressNotifications")) return;
         if (![MessageType.ChatInputCommand, MessageType.ContextMenuCommand, MessageType.Default, MessageType.Reply].includes(message.type)) return;

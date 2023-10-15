@@ -3,7 +3,14 @@ import db from "../../db.js";
 import { assertLogChannelPermissions, assertObserver } from "../../permissions.js";
 import { log } from "../../utils.js";
 
-export default async function (cmd: ChatInputCommandInteraction, id: number, name: string | null, logs: TextChannel | null, isPublic: boolean | null) {
+export default async function (
+    cmd: ChatInputCommandInteraction,
+    id: number,
+    name: string | null,
+    logs: TextChannel | null,
+    isPublic: boolean | null,
+    ignoreFilter: boolean | null,
+) {
     await cmd.deferReply({ ephemeral: true });
     await assertObserver(cmd.user);
 
@@ -17,17 +24,20 @@ export default async function (cmd: ChatInputCommandInteraction, id: number, nam
         await assertLogChannelPermissions(logs);
     }
 
-    const $set: { name?: string; logs?: string; public?: boolean } = {};
+    const $set: { name?: string; logs?: string; public?: boolean; ignoreFilter?: boolean } = {};
 
     if (name) $set.name = name;
     if (logs) $set.logs = logs.id;
     if (isPublic !== null) $set.public = isPublic;
+    if (ignoreFilter !== null) $set.ignoreFilter = ignoreFilter;
 
     await db.channels.updateOne({ id }, { $set });
 
     const text = `pdated global channel #${id}:\n${$set.name ? `- **Renamed:** ${doc.name} :arrow_right: ${$set.name}\n` : ""}${
         $set.logs ? `- **Log Channel:** <#${doc.logs}> :arrow_right: <#${$set.logs}>\n` : ""
-    }${$set.public !== undefined ? `- **Public**: \`${doc.public}\` :arrow_right: \`${$set.public}\`` : ""}`;
+    }${$set.public !== undefined ? `- **Public**: \`${doc.public}\` :arrow_right: \`${$set.public}\`\n` : ""}${
+        $set.ignoreFilter !== undefined ? `- **Ignore Filter**: \`${doc.ignoreFilter}\` :arrow_right: \`${$set.ignoreFilter}\`\n` : ""
+    }`;
 
     await log(doc, `${cmd.user} u${text}`);
     if ($set.logs) await log($set.logs, `${cmd.user} u${text}`);
