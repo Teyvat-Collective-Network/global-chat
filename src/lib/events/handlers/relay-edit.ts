@@ -1,16 +1,19 @@
+import { diffWords } from "diff";
 import { ChannelType, Events, MessageType } from "discord.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { constructMessage } from "../../utils.js";
+import { addProfile, constructMessage, log } from "../../utils.js";
 
-bot.on(Events.MessageUpdate, async (_, _message) => {
+const regex = { escape: /(?<!\\)((?:\\\\)*)([\[\]\(\)*~_`])/, trim: /^(\s*)(.*?)(\s*)$/ };
+
+bot.on(Events.MessageUpdate, async (before, _message) => {
     const message = await _message.fetch();
 
     if (message.channel.type !== ChannelType.GuildText) return;
-    if (message.webhookId) return;
+    if (message.webhookId && message.type !== MessageType.ChatInputCommand && message.type !== MessageType.ContextMenuCommand) return;
     if (message.flags.has("SuppressNotifications")) return;
 
     const doc = await db.messages.findOne({ channel: message.channelId, message: message.id });
@@ -46,5 +49,18 @@ bot.on(Events.MessageUpdate, async (_, _message) => {
                 }
             }),
         );
+
+        const diff = diffWords(before.content || "", message.content || "")
+            .map((res) => {
+                const out = res.value;
+
+                if (res.added) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1**$2**$3");
+                if (res.removed) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1~~$2~~$3");
+
+                return (out.length > 32 ? `${out.slice(0, 16)}...${out.slice(-16)}` : out).replace(regex.escape, "$1\\$2");
+            })
+            .join("");
+
+        if (diff) await log(doc.id, await addProfile({ content: diff }, message.member ?? message.author, message.guild, true, true));
     });
 });

@@ -11,5 +11,5 @@ bot.on(Events.MessageDelete, async (message) => {
         $or: [{ channel: message.channelId, message: message.id }, { instances: { channel: message.channelId, message: message.id } }],
     });
 
-    if (doc) await relayDelete(doc);
+    if (doc && !doc.deleted) await relayDelete(doc, true);
 });

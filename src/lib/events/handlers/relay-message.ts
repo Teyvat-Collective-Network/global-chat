@@ -4,11 +4,11 @@ import db from "../../db.js";
 import logger from "../../logger.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { constructMessage, fetchGuildName, fetchName, getConnection, getWebhook } from "../../utils.js";
+import { addProfile, constructMessage, getConnection, getWebhook } from "../../utils.js";
 
 bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
-    if (message.webhookId) return;
+    if (message.webhookId && message.type !== MessageType.ChatInputCommand && message.type !== MessageType.ContextMenuCommand) return;
 
     const id = await getConnection(message.channelId).catch();
     if (!id) return;
@@ -43,16 +43,9 @@ bot.on(Events.MessageCreate, async (message) => {
                     const webhook = await getWebhook(output);
                     if (!webhook) return;
 
-                    const send = await constructMessage(message, connection);
-
-                    send.avatarURL = message.member ? message.member.displayAvatarURL() : message.author.displayAvatarURL();
-
-                    send.username = `${await fetchName(message.author, showTag)}${showServers ? ` from ${await fetchGuildName(message.guild!)}` : ""}`.slice(
-                        0,
-                        80,
+                    return await webhook.send(
+                        await addProfile(await constructMessage(message, connection), message.member ?? message.author, message.guild, showServers, showTag),
                     );
-
-                    return await webhook.send(send);
                 } catch (error) {
                     logger.error(error, "eb4afe59-fbc5-48b4-bc2d-af991ef04679");
                 }

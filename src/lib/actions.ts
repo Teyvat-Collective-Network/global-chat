@@ -1,4 +1,4 @@
-import { ChannelType } from "discord.js";
+import { ChannelType, Message } from "discord.js";
 import { WithId } from "mongodb";
 import bot from "./bot.js";
 import db from "./db.js";
@@ -6,10 +6,14 @@ import logger from "./logger.js";
 import Priority from "./priority.js";
 import queue from "./queue.js";
 import { GlobalMessage } from "./types.js";
+import { addProfile, constructMessage, log } from "./utils.js";
 
-export async function relayDelete(doc: WithId<GlobalMessage>) {
+export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = false) {
     await queue(Priority.DELETE, async () => {
+        await db.messages.updateOne({ _id: doc._id }, { $set: { deleted: true } });
         const connections = await db.connections.find({ id: doc.id }).toArray();
+
+        let copy: Message | undefined | null;
 
         await Promise.all(
             [...doc.instances, doc].map(async (instance) => {
@@ -20,12 +24,19 @@ export async function relayDelete(doc: WithId<GlobalMessage>) {
                     const channel = await bot.channels.fetch(instance.channel);
                     if (channel?.type !== ChannelType.GuildText) return;
 
+                    let linked: Message | undefined | null;
+
+                    if (doLog && !copy) {
+                        linked = (await channel.messages.fetch(instance.message).catch()) ?? null;
+                        copy = linked;
+                    }
+
                     try {
                         await channel.messages.delete(instance.message);
                         return;
                     } catch {}
 
-                    const linked = await channel.messages.fetch(instance.message).catch();
+                    if (linked === undefined) linked = await channel.messages.fetch(instance.message).catch();
                     if (!linked) return;
 
                     if (linked.webhookId) {
@@ -37,5 +48,17 @@ export async function relayDelete(doc: WithId<GlobalMessage>) {
                 }
             }),
         );
+
+        if (doLog && copy) {
+            const toLog = await constructMessage(copy, { replyStyle: "text", showServers: true, showTag: true, noReply: true });
+            toLog.content = `**[deleted]** ${toLog.content ?? ""}`.slice(0, 2000);
+
+            const channel = await bot.channels.fetch(doc.channel).catch();
+            const guild = channel && "guild" in channel ? channel.guild : null;
+
+            const user = (guild && (await guild.members.fetch(doc.author).catch())) ?? (await bot.users.fetch(doc.author).catch());
+
+            await log(doc.id, await addProfile(toLog, user, guild, true, true));
+        }
     });
 }

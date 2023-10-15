@@ -32,4 +32,5 @@ export type GlobalMessage = {
     channel: string;
     message: string;
     instances: { channel: string; message: string }[];
+    deleted?: boolean;
 };

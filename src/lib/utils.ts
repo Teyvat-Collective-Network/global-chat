@@ -9,7 +9,6 @@ import {
     TextChannel,
     User,
     WebhookMessageCreateOptions,
-    WebhookMessageEditOptions,
 } from "discord.js";
 import { fstatSync, openSync } from "node:fs";
 import api from "./api.js";
@@ -32,11 +31,15 @@ export async function getConnection(channelId: string, overrideId?: number | nul
     return doc.id;
 }
 
-export async function log(obj: number | GlobalChannel | string, payload: string | MessagePayload | MessageCreateOptions) {
+export async function log(obj: number | GlobalChannel | string, payload: string | MessagePayload | MessageCreateOptions | WebhookMessageCreateOptions) {
     try {
         const id = typeof obj === "string" ? obj : (typeof obj === "number" ? await db.channels.findOne({ id: obj }) : obj)!.logs;
         const channel = (await bot.channels.fetch(id)) as TextChannel;
-        await channel.send(payload);
+
+        const webhook = await getWebhook(channel);
+
+        if (webhook) await webhook.send(payload);
+        else await channel.send(payload);
     } catch (error) {
         logger.error(error, "515e05cc-1a86-4fdf-9f83-5c74d5fb7e2b");
     }
@@ -45,12 +48,12 @@ export async function log(obj: number | GlobalChannel | string, payload: string 
 export async function fetchName(user: User | GuildMember | undefined | null, showTag: boolean) {
     if (!user) return "[User Not Found]";
 
-    if (showTag) return user instanceof GuildMember ? user.displayName : user.tag;
+    if (showTag) return user instanceof GuildMember ? user.user.tag : user.tag;
 
     const entry = await db.users.findOne({ id: user.id });
     if (entry?.nickname) return entry.nickname;
 
-    return user instanceof GuildMember ? user.displayName : user.tag;
+    return user instanceof GuildMember ? user.displayName : user.username;
 }
 
 export async function fetchGuildName(guild: Guild) {
@@ -69,7 +72,13 @@ export async function getWebhook(channel: TextChannel) {
 
 export async function constructMessage(
     message: Message,
-    { channel, replyStyle, showServers, showTag }: GlobalConnection,
+    {
+        channel,
+        replyStyle,
+        showServers,
+        showTag,
+        noReply,
+    }: Pick<GlobalConnection, "replyStyle" | "showServers" | "showTag"> & { channel?: string; noReply?: boolean },
 ): Promise<WebhookMessageCreateOptions> {
     const data: WebhookMessageCreateOptions = {};
 
@@ -104,7 +113,7 @@ export async function constructMessage(
     if (failed && data.embeds.length < 10)
         data.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
 
-    if (message.type === MessageType.Reply) {
+    if (!noReply && message.type === MessageType.Reply) {
         let ref: Message | undefined | null;
         let author: User | undefined;
 
@@ -120,7 +129,7 @@ export async function constructMessage(
             if (doc.channel === channel) ref = await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(doc.message);
             else {
                 const instance = doc.instances.find((x) => x.channel === channel);
-                ref = instance ? await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(instance.message) : null;
+                ref = instance ? await ((await bot.channels.fetch(channel!)) as TextChannel).messages.fetch(instance.message) : null;
             }
 
             author = await bot.users.fetch(doc.author).catch();
@@ -150,4 +159,18 @@ export async function constructMessage(
     }
 
     return data;
+}
+
+export async function addProfile(
+    out: WebhookMessageCreateOptions,
+    user: GuildMember | User | null,
+    guild: Guild | null,
+    showServers: boolean,
+    showTag: boolean,
+) {
+    return {
+        ...out,
+        avatarURL: user && user.displayAvatarURL(),
+        username: `${await fetchName(user, showTag)} ${showServers ? `from ${guild ? await fetchGuildName(guild) : "unknown guild"}` : ""}`.trim().slice(0, 80),
+    };
 }
