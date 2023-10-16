@@ -27,7 +27,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message) {
     toLog.embeds = [{ title: "Blocked Term", description: match, color: 0x2b2d31 }, ...(toLog.embeds ?? [])].slice(0, 10);
 
     await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
-    await message.delete().catch();
+    await message.delete().catch(() => {});
     return true;
 }
 
@@ -50,7 +50,7 @@ export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = f
                     let linked: Message | undefined | null;
 
                     if (doLog && !copy) {
-                        linked = (await channel.messages.fetch(instance.message).catch()) ?? null;
+                        linked = (await channel.messages.fetch(instance.message).catch(() => {})) ?? null;
                         copy = linked;
                     }
 
@@ -59,7 +59,7 @@ export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = f
                         return;
                     } catch {}
 
-                    if (linked === undefined) linked = await channel.messages.fetch(instance.message).catch();
+                    if (linked === undefined) linked = await channel.messages.fetch(instance.message).catch(() => {});
                     if (!linked) return;
 
                     if (linked.webhookId) {
@@ -76,10 +76,10 @@ export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = f
             const toLog = await constructMessage(copy, { replyStyle: "text", showServers: true, showTag: true, noReply: true });
             toLog.content = `**[deleted]** ${toLog.content ?? ""}`.slice(0, 2000);
 
-            const channel = await bot.channels.fetch(doc.channel).catch();
+            const channel = await bot.channels.fetch(doc.channel).catch(() => {});
             const guild = channel && "guild" in channel ? channel.guild : null;
 
-            const user = (guild && (await guild.members.fetch(doc.author).catch())) ?? (await bot.users.fetch(doc.author).catch());
+            const user = (guild && (await guild.members.fetch(doc.author).catch(() => {}))) ?? (await bot.users.fetch(doc.author).catch(() => {}));
 
             await log(doc.id, await addProfile(toLog, user, guild, true, true));
         }

@@ -11,7 +11,7 @@ bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
     if (message.webhookId && message.type !== MessageType.ChatInputCommand && message.type !== MessageType.ContextMenuCommand) return;
 
-    const id = await getConnection(message.channelId).catch();
+    const id = await getConnection(message.channelId).catch(() => {});
     if (!id) return;
 
     const doc = await db.connections.findOne({ id, guild: message.guildId! });
@@ -22,11 +22,11 @@ bot.on(Events.MessageCreate, async (message) => {
         const channel = await db.channels.findOne({ id });
         if (!channel) return;
         if (channel.panic) return;
-        if (channel.bans.includes(message.author.id)) return await message.delete().catch();
+        if (channel.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
         const source = await db.connections.findOne({ id, guild: message.guild!.id });
         if (!source) return;
-        if (source.bans.includes(message.author.id)) return await message.delete().catch();
+        if (source.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
         if (await maybeFilter(channel, message)) return;
 

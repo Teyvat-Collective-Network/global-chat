@@ -52,7 +52,7 @@ bot.on(Events.MessageBulkDelete, async (messages) => {
                         try {
                             await channel.bulkDelete(ids);
                         } catch {
-                            const linked = (await Promise.all(ids.map((id) => channel.messages.fetch(id).catch()))).filter((x) => x);
+                            const linked = (await Promise.all(ids.map((id) => channel.messages.fetch(id).catch(() => {})))).filter((x) => x);
                             await Promise.all(linked.map((x) => x.delete().catch((error) => logger.error(error, "472a602f-a5f3-41c4-8f8b-e9caedfd3a83"))));
                         }
                     } catch (error) {

@@ -22,6 +22,6 @@ export default async function (cmd: ChatInputCommandInteraction, name: string, l
         ignoreFilter,
     });
 
-    await logs.send(`${cmd.user} created ${isPublic ? "public" : "private"} global channel ${name}. Logs will be posted here.`).catch();
+    await logs.send(`${cmd.user} created ${isPublic ? "public" : "private"} global channel ${name}. Logs will be posted here.`).catch(() => {});
     return `Created ${isPublic ? "public" : "private"} global channel ${name} with logging channel ${logs}.`;
 }

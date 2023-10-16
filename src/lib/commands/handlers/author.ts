@@ -10,7 +10,7 @@ export default async function (cmd: ChatInputCommandInteraction | MessageContext
     const doc = await db.messages.findOne({ $or: [{ message }, { instances: { $elemMatch: { message } } }] });
     if (!doc) throw "That is not a global chat message.";
 
-    const user = await bot.users.fetch(doc.author).catch();
+    const user = await bot.users.fetch(doc.author).catch(() => {});
 
     return `That message was sent by ${user} (${user.tag}).`;
 }

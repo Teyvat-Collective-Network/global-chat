@@ -57,7 +57,7 @@ export async function fetchName(user: User | GuildMember | undefined | null, sho
 }
 
 export async function fetchGuildName(guild: Guild) {
-    const apiGuild: { name: string } | undefined = await api(`/guilds/${guild.id}`).catch();
+    const apiGuild: { name: string } | undefined = await api(`/guilds/${guild.id}`).catch(() => {});
     return apiGuild?.name ?? guild.name;
 }
 
@@ -132,7 +132,7 @@ export async function constructMessage(
                 ref = instance ? await ((await bot.channels.fetch(channel!)) as TextChannel).messages.fetch(instance.message) : null;
             }
 
-            author = await bot.users.fetch(doc.author).catch();
+            author = await bot.users.fetch(doc.author).catch(() => {});
         } catch {
             ref = null;
         }

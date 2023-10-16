@@ -42,7 +42,7 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
                     const channel = await bot.channels.fetch(instance.channel);
                     if (channel?.type !== ChannelType.GuildText) return;
 
-                    const linked = await channel.messages.fetch(instance.message).catch();
+                    const linked = await channel.messages.fetch(instance.message).catch(() => {});
                     if (!linked) return;
 
                     const webhook = await linked.fetchWebhook();
