@@ -24,7 +24,7 @@ export default async function (_: unknown, page: string | null, isPublic: boolea
                     fields: [
                         {
                             name: "Be Nice",
-                            value: "If other users are being disrespectful, disengage and alert mods if needed using `/global alert`. Being nice extends to all parties, including other members, moderators, users not in global chat, and non-TCN servers.",
+                            value: "If other users are being disrespectful, disengage and reach out to a mod if needed. Being nice extends to all parties, including other members, moderators, users not in global chat, and non-TCN servers.",
                         },
                         {
                             name: "No NSFW/NSFL",
