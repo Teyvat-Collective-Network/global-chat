@@ -3,6 +3,7 @@ import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
+import { RELAY_CHANNEL_PERMISSIONS_ESSENTIAL } from "../../permissions.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
 import { addProfile, constructMessage, getConnection, getWebhook } from "../../utils.js";
@@ -42,6 +43,11 @@ bot.on(Events.MessageCreate, async (message) => {
 
                     const output = await bot.channels.fetch(id);
                     if (output?.type !== ChannelType.GuildText) return;
+
+                    if (!output.permissionsFor(output.client.user)?.has(RELAY_CHANNEL_PERMISSIONS_ESSENTIAL)) {
+                        logger.error(`Deliberately skipped replicating message to ${output.id} because of improper permission configuration.`);
+                        return;
+                    }
 
                     const webhook = await getWebhook(output);
                     if (!webhook) return;

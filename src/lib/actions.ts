@@ -6,7 +6,11 @@ import logger from "./logger.js";
 import Priority from "./priority.js";
 import queue from "./queue.js";
 import { GlobalChannel, GlobalMessage } from "./types.js";
-import { addProfile, constructMessage, log } from "./utils.js";
+import { addProfile, constructMessage, escapeRegExp, log } from "./utils.js";
+
+import scamlinks from "./scamlinks.js";
+
+const scamfilter = scamlinks.map((link) => new RegExp(`\\b(https?://)?${escapeRegExp(link)}\\b`));
 
 export async function maybeFilter(channel: GlobalChannel, message: Message) {
     if (channel.ignoreFilter || !message.content) return false;
@@ -15,8 +19,10 @@ export async function maybeFilter(channel: GlobalChannel, message: Message) {
 
     let match: string | undefined;
 
-    for (const filter of filters) {
-        match = message.content.match(new RegExp(filter.match))?.[0];
+    for (const filter of [...scamfilter, ...filters]) {
+        if (filter instanceof RegExp) match = message.content.match(filter)?.[0];
+        else match = message.content.match(new RegExp(filter.match))?.[0];
+
         if (match) break;
     }
 

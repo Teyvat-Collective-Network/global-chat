@@ -19,7 +19,6 @@ const RELAY_CHANNEL_PERMISSIONS_MAP = {
     [`${PermissionsBitField.Flags.AttachFiles}`]: "Attach Files",
     [`${PermissionsBitField.Flags.UseExternalEmojis}`]: "Use External Emoji",
     [`${PermissionsBitField.Flags.UseExternalSounds}`]: "Use External Stickers",
-    [`${PermissionsBitField.Flags.SendVoiceMessages}`]: "Send Voice Messages",
     [`${PermissionsBitField.Flags.ManageWebhooks}`]: "Manage Webhooks",
     [`${PermissionsBitField.Flags.ManageMessages}`]: "Manage Messages",
 };
@@ -31,6 +30,13 @@ export const LOG_CHANNEL_PERMISSIONS = Object.keys(LOG_CHANNEL_PERMISSIONS_MAP)
 export const RELAY_CHANNEL_PERMISSIONS = Object.keys(RELAY_CHANNEL_PERMISSIONS_MAP)
     .map(BigInt)
     .reduce((x, y) => x | y);
+
+export const RELAY_CHANNEL_PERMISSIONS_ESSENTIAL =
+    PermissionsBitField.Flags.ViewChannel |
+    PermissionsBitField.Flags.ReadMessageHistory |
+    PermissionsBitField.Flags.SendMessages |
+    PermissionsBitField.Flags.ManageWebhooks |
+    PermissionsBitField.Flags.ManageMessages;
 
 export async function assertTCN(interaction: ChatInputCommandInteraction | ButtonInteraction, allowObserverOverride: boolean = false) {
     const req = await api(`!/guilds/${interaction.guildId}`);
