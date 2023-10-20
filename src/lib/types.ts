@@ -23,8 +23,6 @@ export type GlobalConnection = {
 export type GlobalUser = {
     id: string;
     nickname: string | null;
-    messages: Record<number, number>;
-    deletedMessages: Record<number, number>;
 };
 
 export type GlobalMessage = {
