@@ -30,9 +30,11 @@ async function process() {
     setTimeout(process);
 }
 
-export default function <T, U extends unknown[]>(priority: Priority, fn: (...args: U) => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-        queue.enqueue({ priority, created: Date.now(), fn, resolve, reject });
-        if (!running) process();
-    });
+export default function <T>(priority: Priority, fn: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => fn().then(resolve).catch(reject));
+
+    // return new Promise((resolve, reject) => {
+    //     queue.enqueue({ priority, created: Date.now(), fn, resolve, reject });
+    //     if (!running) process();
+    // });
 }
