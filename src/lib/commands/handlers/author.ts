@@ -12,5 +12,5 @@ export default async function (cmd: ChatInputCommandInteraction | MessageContext
 
     const user = await bot.users.fetch(doc.author).catch(() => {});
 
-    return `That message was sent by ${user} (${user.tag}).`;
+    return `That message was sent by ${user} (${user?.tag}).`;
 }

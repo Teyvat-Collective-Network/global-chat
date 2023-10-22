@@ -9,6 +9,11 @@ export default [
         dmPermission: false,
         options: [
             {
+                type: ApplicationCommandOptionType.Subcommand,
+                name: "scan",
+                description: "scan for channels with improper permissions",
+            },
+            {
                 type: ApplicationCommandOptionType.SubcommandGroup,
                 name: "channels",
                 description: "global chat channel commands",

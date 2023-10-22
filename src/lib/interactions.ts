@@ -19,6 +19,7 @@ import modsRemove from "./commands/handlers/mods-remove.js";
 import nickname from "./commands/handlers/nickname.js";
 import panic from "./commands/handlers/panic.js";
 import purgeMessage from "./commands/handlers/purge-message.js";
+import scan from "./commands/handlers/scan.js";
 import unban from "./commands/handlers/unban.js";
 import unpanic from "./commands/handlers/unpanic.js";
 import cancel from "./components/cancel.js";
@@ -43,7 +44,9 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                     const key = group ? `${group}/${sub}` : sub;
 
                     response =
-                        key === "channels/create"
+                        key === "scan"
+                            ? await scan(interaction)
+                            : key === "channels/create"
                             ? await channelsCreate(
                                   interaction,
                                   opts.getString("name", true),
