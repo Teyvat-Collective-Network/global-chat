@@ -1,5 +1,6 @@
 import {
     AttachmentPayload,
+    EmbedType,
     Guild,
     GuildMember,
     Message,
@@ -108,7 +109,7 @@ export async function constructMessages(
 
     base.files = attachments;
 
-    if (message.embeds) base.embeds = message.embeds.map((embed) => embed.toJSON());
+    if (message.embeds) base.embeds = message.embeds.filter((embed) => embed.data.type === EmbedType.Rich).map((embed) => embed.toJSON());
     else base.embeds = [];
 
     if (failed && base.embeds.length < 10)
