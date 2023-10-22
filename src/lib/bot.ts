@@ -1,8 +1,9 @@
-import { Client, Events, IntentsBitField, TextChannel } from "discord.js";
+import { Client, Events, IntentsBitField, Partials, TextChannel } from "discord.js";
 
 const bot = new Client({
     allowedMentions: { parse: [] },
     intents: IntentsBitField.Flags.Guilds | IntentsBitField.Flags.GuildMembers | IntentsBitField.Flags.GuildMessages | IntentsBitField.Flags.MessageContent,
+    partials: [Partials.Message],
 });
 
 await bot.login(Bun.env.TOKEN);
