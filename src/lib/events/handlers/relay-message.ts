@@ -6,7 +6,7 @@ import logger from "../../logger.js";
 import { RELAY_CHANNEL_PERMISSIONS_ESSENTIAL } from "../../permissions.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { addProfile, constructMessages, getConnection, getWebhook } from "../../utils.js";
+import { constructMessages, fetchGuildName, fetchName, getConnection, getWebhook } from "../../utils.js";
 
 bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
@@ -38,6 +38,11 @@ bot.on(Events.MessageCreate, async (message) => {
 
         const copies = Object.fromEntries((await constructMessages(message, connections)).map((x, i) => [connections[i].channel, x]));
 
+        const avatarURL = (message.member ?? message.author).displayAvatarURL();
+        const usernameWithTag = await fetchName(message.member ?? message.author, true);
+        const usernameWithoutTag = await fetchName(message.member ?? message.author, false);
+        const guildname = await fetchGuildName(message.guild!);
+
         const messages = await Promise.all(
             connections.map(async (connection) => {
                 try {
@@ -54,9 +59,11 @@ bot.on(Events.MessageCreate, async (message) => {
                     const webhook = await getWebhook(output);
                     if (!webhook) return;
 
-                    return await webhook.send(
-                        await addProfile(copies[connection.channel], message.member ?? message.author, message.guild, showServers, showTag),
-                    );
+                    return await webhook.send({
+                        ...copies[connection.channel],
+                        avatarURL,
+                        username: `${showTag ? usernameWithTag : usernameWithoutTag} ${showServers ? `from ${guildname}` : ""}`,
+                    });
                 } catch (error) {
                     logger.error(error, "eb4afe59-fbc5-48b4-bc2d-af991ef04679");
                 }
