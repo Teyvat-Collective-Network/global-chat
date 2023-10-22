@@ -6,7 +6,7 @@ import db from "../../db.js";
 import logger from "../../logger.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { addProfile, constructMessage, log } from "../../utils.js";
+import { addProfile, constructMessages, log } from "../../utils.js";
 
 const regex = { escape: /(?<!\\)((?:\\\\)*)([\[\]\(\)*~_`])/, trim: /^(\s*)(.*?)(\s*)$/ };
 
@@ -33,6 +33,8 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
 
         const connections = await db.connections.find({ id: doc.id, guild: { $ne: message.guildId! }, bans: { $ne: message.author.id } }).toArray();
 
+        const copies = Object.fromEntries((await constructMessages(message, connections)).map((x, i) => [connections[i].channel, x]));
+
         await Promise.all(
             doc.instances.map(async (instance) => {
                 try {
@@ -46,7 +48,7 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
                     if (!linked) return;
 
                     const webhook = await linked.fetchWebhook();
-                    await webhook.editMessage(linked, await constructMessage(message, connection));
+                    await webhook.editMessage(linked, copies[connection.channel]);
                 } catch (error) {
                     logger.error(error, "8867017e-c5da-4f3a-8c3c-ee50295a0fb2");
                 }

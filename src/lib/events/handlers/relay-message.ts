@@ -6,7 +6,7 @@ import logger from "../../logger.js";
 import { RELAY_CHANNEL_PERMISSIONS_ESSENTIAL } from "../../permissions.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { addProfile, constructMessage, getConnection, getWebhook } from "../../utils.js";
+import { addProfile, constructMessages, getConnection, getWebhook } from "../../utils.js";
 
 bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
@@ -36,6 +36,8 @@ bot.on(Events.MessageCreate, async (message) => {
 
         const connections = await db.connections.find({ id, guild: { $ne: message.guildId! }, suspended: false, bans: { $ne: message.author.id } }).toArray();
 
+        const copies = Object.fromEntries((await constructMessages(message, connections)).map((x, i) => [connections[i].channel, x]));
+
         const messages = await Promise.all(
             connections.map(async (connection) => {
                 try {
@@ -53,7 +55,7 @@ bot.on(Events.MessageCreate, async (message) => {
                     if (!webhook) return;
 
                     return await webhook.send(
-                        await addProfile(await constructMessage(message, connection), message.member ?? message.author, message.guild, showServers, showTag),
+                        await addProfile(copies[connection.channel], message.member ?? message.author, message.guild, showServers, showTag),
                     );
                 } catch (error) {
                     logger.error(error, "eb4afe59-fbc5-48b4-bc2d-af991ef04679");
@@ -64,6 +66,7 @@ bot.on(Events.MessageCreate, async (message) => {
         await db.messages.insertOne({
             id,
             author: message.author.id,
+            guild: message.guildId!,
             channel: message.channelId,
             message: message.id,
             instances: messages.filter((x) => x).map((x) => ({ channel: x!.channelId, message: x!.id })),

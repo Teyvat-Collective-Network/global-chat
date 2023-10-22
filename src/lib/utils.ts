@@ -6,6 +6,7 @@ import {
     MessageCreateOptions,
     MessagePayload,
     MessageType,
+    PartialMessage,
     TextChannel,
     User,
     WebhookMessageCreateOptions,
@@ -45,7 +46,7 @@ export async function log(obj: number | GlobalChannel | string, payload: string 
     }
 }
 
-export async function fetchName(user: User | GuildMember | undefined | null, showTag: boolean) {
+export async function fetchName(user: User | GuildMember | undefined | null | void, showTag: boolean) {
     if (!user) return "[User Not Found]";
 
     if (showTag) return user instanceof GuildMember ? user.user.tag : user.tag;
@@ -56,12 +57,14 @@ export async function fetchName(user: User | GuildMember | undefined | null, sho
     return user instanceof GuildMember ? user.displayName : user.username;
 }
 
-export async function fetchGuildName(guild: Guild) {
-    if (guild.id === Bun.env.HQ) return "TCN HQ";
-    if (guild.id === Bun.env.HUB) return "TCN Hub";
+export async function fetchGuildName(guild: Guild | string) {
+    const id = typeof guild === "string" ? guild : guild.id;
 
-    const apiGuild: { name: string } | undefined = await api(`/guilds/${guild.id}`).catch(() => {});
-    return apiGuild?.name ?? guild.name;
+    if (id === Bun.env.HQ) return "TCN HQ";
+    if (id === Bun.env.HUB) return "TCN Hub";
+
+    const apiGuild: { name: string } | undefined = await api(`/guilds/${id}`).catch(() => {});
+    return apiGuild?.name ?? (typeof guild === "string" ? `Unknown Guild ${guild}` : guild.name);
 }
 
 export async function getWebhook(channel: TextChannel) {
@@ -73,19 +76,14 @@ export async function getWebhook(channel: TextChannel) {
     } catch {}
 }
 
-export async function constructMessage(
-    message: Message,
-    {
-        channel,
-        replyStyle,
-        showServers,
-        showTag,
-        noReply,
-    }: Pick<GlobalConnection, "replyStyle" | "showServers" | "showTag"> & { channel?: string; noReply?: boolean },
-): Promise<WebhookMessageCreateOptions> {
-    const data: WebhookMessageCreateOptions = {};
+export async function constructMessages(
+    message: Message | PartialMessage,
+    configs: (Pick<GlobalConnection, "replyStyle" | "showServers" | "showTag"> & { channel?: string; noReply?: boolean })[],
+): Promise<WebhookMessageCreateOptions[]> {
+    const data: WebhookMessageCreateOptions[] = [];
+    const base: WebhookMessageCreateOptions = {};
 
-    if (message.content) data.content = message.content.slice(0, 2000);
+    if (message.content) base.content = message.content.slice(0, 2000);
 
     const attachments: AttachmentPayload[] = [];
 
@@ -108,57 +106,65 @@ export async function constructMessage(
         }
     }
 
-    data.files = attachments;
+    base.files = attachments;
 
-    if (message.embeds) data.embeds = message.embeds.map((embed) => embed.toJSON());
-    else data.embeds = [];
+    if (message.embeds) base.embeds = message.embeds.map((embed) => embed.toJSON());
+    else base.embeds = [];
 
-    if (failed && data.embeds.length < 10)
-        data.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
+    if (failed && base.embeds.length < 10)
+        base.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
 
-    if (!noReply && message.type === MessageType.Reply) {
-        let ref: Message | undefined | null;
-        let author: User | undefined;
+    for (const { channel, replyStyle, showServers, showTag, noReply } of configs) {
+        const copy: WebhookMessageCreateOptions = { ...base };
 
-        try {
-            const _ref = await message.fetchReference();
+        if (!noReply && message.type === MessageType.Reply) {
+            let ref: Message | undefined | null;
+            let author: User | undefined;
+            let source: string;
 
-            const doc = await db.messages.findOne({
-                $or: [{ channel: _ref.channelId, message: _ref.id }, { instances: { channel: _ref.channelId, message: _ref.id } }],
-            });
+            try {
+                const _ref = await message.fetchReference();
 
-            if (!doc) throw 0;
+                const doc = await db.messages.findOne({
+                    $or: [{ channel: _ref.channelId, message: _ref.id }, { instances: { channel: _ref.channelId, message: _ref.id } }],
+                });
 
-            if (doc.channel === channel) ref = await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(doc.message);
-            else {
-                const instance = doc.instances.find((x) => x.channel === channel);
-                ref = instance ? await ((await bot.channels.fetch(channel!)) as TextChannel).messages.fetch(instance.message) : null;
+                if (!doc) throw 0;
+
+                if (doc.channel === channel) ref = await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(doc.message);
+                else {
+                    const instance = doc.instances.find((x) => x.channel === channel);
+                    ref = instance ? await ((await bot.channels.fetch(channel!)) as TextChannel).messages.fetch(instance.message) : null;
+                }
+
+                author = (await bot.users.fetch(doc.author).catch(() => {})) ?? undefined;
+                source = doc.guild;
+            } catch {
+                ref = null;
             }
 
-            author = await bot.users.fetch(doc.author).catch(() => {});
-        } catch {
-            ref = null;
+            if (ref)
+                if (replyStyle === "embed")
+                    copy.embeds = [
+                        {
+                            author: {
+                                name: `${await fetchName(author, showTag)}${showServers ? ` from ${await fetchGuildName(source!)}**` : ""}`,
+                                icon_url: ref.author.displayAvatarURL(),
+                            },
+                            title: `jump to referenced message`,
+                            url: ref.url,
+                            description: ref.content ? (ref.content.length > 500 ? `${ref.content.slice(0, 500)}...` : ref.content) : "",
+                        },
+                        ...(copy.embeds ?? []),
+                    ].slice(0, 10);
+                else
+                    copy.content = `${Bun.env.REPLY} **${await fetchName(author, showTag)}**${
+                        showServers ? ` from **${await fetchGuildName(source!)}**` : ""
+                    }: [original message](${ref.url})\n${copy.content ?? ""}`.slice(0, 2000);
+            else if (ref === null) copy.content = `${Bun.env.REPLY} **[Original Not Found]**\n${copy.content ?? ""}`.slice(0, 2000);
         }
 
-        if (ref)
-            if (replyStyle === "embed")
-                data.embeds = [
-                    {
-                        author: {
-                            name: `${await fetchName(author, showTag)}${showServers ? ` from ${await fetchGuildName(ref.guild!)}**` : ""}`,
-                            icon_url: ref.author.displayAvatarURL(),
-                        },
-                        title: `jump to referenced message`,
-                        url: ref.url,
-                        description: ref.content ? (ref.content.length > 500 ? `${ref.content.slice(0, 500)}...` : ref.content) : "",
-                    },
-                    ...(data.embeds ?? []),
-                ].slice(0, 10);
-            else
-                data.content = `${Bun.env.REPLY} **${await fetchName(author, showTag)}**${
-                    showServers ? ` from **${await fetchGuildName(ref.guild!)}**` : ""
-                }: [original message](${ref.url})\n${data.content ?? ""}`.slice(0, 2000);
-        else if (ref === null) data.content = `${Bun.env.REPLY} **[Original Not Found]**\n${data.content ?? ""}`.slice(0, 2000);
+        data.push(copy);
     }
 
     return data;
@@ -166,7 +172,7 @@ export async function constructMessage(
 
 export async function addProfile(
     out: WebhookMessageCreateOptions,
-    user: GuildMember | User | null,
+    user: GuildMember | User | undefined | null | void,
     guild: Guild | null,
     showServers: boolean,
     showTag: boolean,

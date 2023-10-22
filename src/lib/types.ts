@@ -28,6 +28,7 @@ export type GlobalUser = {
 export type GlobalMessage = {
     id: number;
     author: string;
+    guild: string;
     channel: string;
     message: string;
     instances: { channel: string; message: string }[];

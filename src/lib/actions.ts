@@ -6,7 +6,7 @@ import logger from "./logger.js";
 import Priority from "./priority.js";
 import queue from "./queue.js";
 import { GlobalChannel, GlobalMessage } from "./types.js";
-import { addProfile, constructMessage, escapeRegExp, log } from "./utils.js";
+import { addProfile, constructMessages, escapeRegExp, log } from "./utils.js";
 
 import scamlinks from "./scamlinks.js";
 
@@ -28,7 +28,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message) {
 
     if (!match) return false;
 
-    const toLog = await constructMessage(message, { replyStyle: "text", showServers: true, showTag: true, noReply: true });
+    const [toLog] = await constructMessages(message, [{ replyStyle: "text", showServers: true, showTag: true, noReply: true }]);
     toLog.content = `**[blocked]** ${toLog.content ?? ""}`.slice(0, 2000);
     toLog.embeds = [{ title: "Blocked Term", description: match, color: 0x2b2d31 }, ...(toLog.embeds ?? [])].slice(0, 10);
 
@@ -37,7 +37,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message) {
     return true;
 }
 
-export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = false) {
+export async function relayDelete(doc: WithId<GlobalMessage>) {
     await queue(Priority.DELETE, async () => {
         await db.messages.updateOne({ _id: doc._id }, { $set: { deleted: true } });
         const connections = await db.connections.find({ id: doc.id }).toArray();
@@ -53,19 +53,14 @@ export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = f
                     const channel = await bot.channels.fetch(instance.channel);
                     if (channel?.type !== ChannelType.GuildText) return;
 
-                    let linked: Message | undefined | null;
-
-                    if (doLog && !copy) {
-                        linked = (await channel.messages.fetch(instance.message).catch(() => {})) ?? null;
-                        copy = linked;
-                    }
+                    let linked: Message | undefined | null | void;
 
                     try {
                         await channel.messages.delete(instance.message);
                         return;
                     } catch {}
 
-                    if (linked === undefined) linked = await channel.messages.fetch(instance.message).catch(() => {});
+                    linked = await channel.messages.fetch(instance.message).catch(() => {});
                     if (!linked) return;
 
                     if (linked.webhookId) {
@@ -77,17 +72,5 @@ export async function relayDelete(doc: WithId<GlobalMessage>, doLog: boolean = f
                 }
             }),
         );
-
-        if (doLog && copy) {
-            const toLog = await constructMessage(copy, { replyStyle: "text", showServers: true, showTag: true, noReply: true });
-            toLog.content = `**[deleted]** ${toLog.content ?? ""}`.slice(0, 2000);
-
-            const channel = await bot.channels.fetch(doc.channel).catch(() => {});
-            const guild = channel && "guild" in channel ? channel.guild : null;
-
-            const user = (guild && (await guild.members.fetch(doc.author).catch(() => {}))) ?? (await bot.users.fetch(doc.author).catch(() => {}));
-
-            await log(doc.id, await addProfile(toLog, user, guild, true, true));
-        }
     });
 }
