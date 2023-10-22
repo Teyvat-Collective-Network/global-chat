@@ -31,7 +31,6 @@ export const RELAY_CHANNEL_PERMISSIONS = Object.keys(RELAY_CHANNEL_PERMISSIONS_M
 export const RELAY_CHANNEL_PERMISSIONS_ESSENTIAL =
     PermissionsBitField.Flags.ViewChannel |
     PermissionsBitField.Flags.ReadMessageHistory |
-    PermissionsBitField.Flags.SendMessages |
     PermissionsBitField.Flags.ManageWebhooks |
     PermissionsBitField.Flags.ManageMessages;
 
