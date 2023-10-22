@@ -14,11 +14,8 @@ const LOG_CHANNEL_PERMISSIONS_MAP = {
 const RELAY_CHANNEL_PERMISSIONS_MAP = {
     [`${PermissionsBitField.Flags.ViewChannel}`]: "View Channel",
     [`${PermissionsBitField.Flags.ReadMessageHistory}`]: "Read Message History",
-    [`${PermissionsBitField.Flags.SendMessages}`]: "Send Messages",
     [`${PermissionsBitField.Flags.EmbedLinks}`]: "Embed Links",
     [`${PermissionsBitField.Flags.AttachFiles}`]: "Attach Files",
-    [`${PermissionsBitField.Flags.UseExternalEmojis}`]: "Use External Emoji",
-    [`${PermissionsBitField.Flags.UseExternalSounds}`]: "Use External Stickers",
     [`${PermissionsBitField.Flags.ManageWebhooks}`]: "Manage Webhooks",
     [`${PermissionsBitField.Flags.ManageMessages}`]: "Manage Messages",
 };
