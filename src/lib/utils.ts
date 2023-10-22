@@ -17,7 +17,7 @@ import bot from "./bot.js";
 import db from "./db.js";
 import logger from "./logger.js";
 import stickerCache from "./sticker-cache.js";
-import { GlobalChannel, GlobalConnection } from "./types.js";
+import { GlobalChannel, GlobalConnection, GlobalMessage } from "./types.js";
 
 export function escapeRegExp(string: string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -114,41 +114,51 @@ export async function constructMessages(
     if (failed && base.embeds.length < 10)
         base.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
 
+    let _ref: Message | undefined;
+    let doc: GlobalMessage | undefined | null;
+    let ref: Message | undefined | null;
+    let author: User | undefined;
+    let source: string | undefined;
+
+    if (message.type === MessageType.Reply && configs.some((x) => !x.noReply))
+        try {
+            _ref = await message.fetchReference();
+
+            doc = await db.messages.findOne({
+                $or: [{ channel: _ref.channelId, message: _ref.id }, { instances: { channel: _ref.channelId, message: _ref.id } }],
+            });
+
+            if (!doc) throw 0;
+
+            author = (await bot.users.fetch(doc.author).catch(() => {})) ?? undefined;
+            source = doc.guild;
+        } catch {
+            ref = null;
+        }
+
+    const authorNameWithTag = author && (await fetchName(author, true));
+    const authorNameWithoutTag = author && (await fetchName(author, false));
+    const name = source && (await fetchGuildName(source));
+
     for (const { channel, replyStyle, showServers, showTag, noReply } of configs) {
         const copy: WebhookMessageCreateOptions = { ...base };
 
-        if (!noReply && message.type === MessageType.Reply) {
-            let ref: Message | undefined | null;
-            let author: User | undefined;
-            let source: string;
-
-            try {
-                const _ref = await message.fetchReference();
-
-                const doc = await db.messages.findOne({
-                    $or: [{ channel: _ref.channelId, message: _ref.id }, { instances: { channel: _ref.channelId, message: _ref.id } }],
-                });
-
-                if (!doc) throw 0;
-
+        if (!noReply && doc) {
+            if (ref !== null)
                 if (doc.channel === channel) ref = await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(doc.message);
                 else {
                     const instance = doc.instances.find((x) => x.channel === channel);
                     ref = instance ? await ((await bot.channels.fetch(channel!)) as TextChannel).messages.fetch(instance.message) : null;
                 }
 
-                author = (await bot.users.fetch(doc.author).catch(() => {})) ?? undefined;
-                source = doc.guild;
-            } catch {
-                ref = null;
-            }
+            const authorName = showTag ? authorNameWithTag : authorNameWithoutTag;
 
             if (ref)
                 if (replyStyle === "embed")
                     copy.embeds = [
                         {
                             author: {
-                                name: `${await fetchName(author, showTag)}${showServers ? ` from ${await fetchGuildName(source!)}**` : ""}`,
+                                name: `${authorName}${showServers ? ` from ${name}**` : ""}`,
                                 icon_url: ref.author.displayAvatarURL(),
                             },
                             title: `jump to referenced message`,
@@ -158,9 +168,9 @@ export async function constructMessages(
                         ...(copy.embeds ?? []),
                     ].slice(0, 10);
                 else
-                    copy.content = `${Bun.env.REPLY} **${await fetchName(author, showTag)}**${
-                        showServers ? ` from **${await fetchGuildName(source!)}**` : ""
-                    }: [original message](${ref.url})\n${copy.content ?? ""}`.slice(0, 2000);
+                    copy.content = `${Bun.env.REPLY} **${authorName}**${showServers ? ` from **${name}**` : ""}: [original message](${ref.url})\n${
+                        copy.content ?? ""
+                    }`.slice(0, 2000);
             else if (ref === null) copy.content = `${Bun.env.REPLY} **[Original Not Found]**\n${copy.content ?? ""}`.slice(0, 2000);
         }
 
