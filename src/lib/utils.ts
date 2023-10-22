@@ -64,7 +64,7 @@ export async function fetchGuildName(guild: Guild) {
 export async function getWebhook(channel: TextChannel) {
     try {
         const webhooks = await channel.fetchWebhooks();
-        const webhook = webhooks.first() ?? (await channel.createWebhook({ name: "TCN Global Chat" }));
+        const webhook = webhooks.filter((x) => x.token).first() ?? (await channel.createWebhook({ name: "TCN Global Chat" }));
 
         return webhook;
     } catch {}
