@@ -55,17 +55,19 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
             }),
         );
 
-        const diff = diffWords(before.content || "", message.content || "")
-            .map((res) => {
-                const out = res.value;
+        if ((before.content || "") !== (message.content || "")) {
+            const diff = diffWords(before.content || "", message.content || "")
+                .map((res) => {
+                    const out = res.value;
 
-                if (res.added) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1**$2**$3");
-                if (res.removed) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1~~$2~~$3");
+                    if (res.added) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1**$2**$3");
+                    if (res.removed) return out.replace(regex.escape, "$1\\$2").replace(regex.trim, "$1~~$2~~$3");
 
-                return (out.length > 32 ? `${out.slice(0, 16)}...${out.slice(-16)}` : out).replace(regex.escape, "$1\\$2");
-            })
-            .join("");
+                    return (out.length > 32 ? `${out.slice(0, 16)}...${out.slice(-16)}` : out).replace(regex.escape, "$1\\$2");
+                })
+                .join("");
 
-        if (diff) await log(doc.id, await addProfile({ content: diff }, message.member ?? message.author, message.guild, true, true));
+            if (diff) await log(doc.id, await addProfile({ content: diff }, message.member ?? message.author, message.guild, true, true));
+        }
     });
 });
