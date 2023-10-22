@@ -1,26 +1,18 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import db from "../../db.js";
 import { assertAdmin } from "../../permissions.js";
-import { getConnection } from "../../utils.js";
 
 export default async function (cmd: ChatInputCommandInteraction, replyStyle: string | null, showServers: boolean | null, showTag: boolean | null) {
     await cmd.deferReply({ ephemeral: true });
-
     await assertAdmin(cmd);
 
-    const id = await getConnection(cmd.channelId);
-    const doc = await db.channels.findOne({ id });
+    const $set: any = {};
 
-    await db.connections.updateOne(
-        { channel: cmd.channelId },
-        {
-            $set: {
-                replyStyle: (replyStyle as any) ?? undefined,
-                showServers: showServers ?? undefined,
-                showTag: showTag ?? undefined,
-            },
-        },
-    );
+    if (replyStyle !== null) $set.replyStyle = replyStyle;
+    if (showServers !== null) $set.showServers = showServers;
+    if (showTag !== null) $set.showTag = showTag;
+
+    await db.connections.updateOne({ channel: cmd.channelId }, { $set });
 
     return "Your edits have been saved.";
 }
