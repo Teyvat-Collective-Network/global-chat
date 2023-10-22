@@ -57,6 +57,9 @@ export async function fetchName(user: User | GuildMember | undefined | null, sho
 }
 
 export async function fetchGuildName(guild: Guild) {
+    if (guild.id === Bun.env.HQ) return "TCN HQ";
+    if (guild.id === Bun.env.HUB) return "TCN Hub";
+
     const apiGuild: { name: string } | undefined = await api(`/guilds/${guild.id}`).catch(() => {});
     return apiGuild?.name ?? guild.name;
 }
