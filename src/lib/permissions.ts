@@ -71,7 +71,7 @@ async function assertChannelPermissions(channel: TextChannel, required: bigint, 
     const missing = PermissionsBitField.resolve(channel.permissionsFor(channel.client.user)?.missing(required) ?? required);
 
     if (missing)
-        throw `Please grant me the following permissions in ${channel} to use it as a logging channel:\n${Object.entries(map)
+        throw `Please grant me the following permissions in ${channel}:\n${Object.entries(map)
             .filter(([x]) => BigInt(x) & missing)
             .map(([, y]) => `- ${y}`)
             .join("\n")}`;
