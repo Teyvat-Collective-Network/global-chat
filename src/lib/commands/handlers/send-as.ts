@@ -26,7 +26,7 @@ export default async function (cmd: ChatInputCommandInteraction, as: number, mod
 
     let isMod: boolean | undefined;
 
-    if (as === 1) {
+    if (as === 0 || as === 1) {
         await assertMod(cmd.user, id);
         isMod = true;
     } else if (as === 2) {
