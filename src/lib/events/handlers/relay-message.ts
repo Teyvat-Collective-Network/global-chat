@@ -57,7 +57,7 @@ bot.on(Events.MessageCreate, async (message) => {
                     }
 
                     const webhook = await getWebhook(output);
-                    if (!webhook) return;
+                    if (!webhook || channel.panic) return;
 
                     return await webhook.send({
                         ...copies[connection.channel],

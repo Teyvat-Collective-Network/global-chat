@@ -15,26 +15,24 @@ const compare: ICompare<Task<any>> = (a, b) => {
 
 const queue = new PriorityQueue<Task<any>>(compare);
 
-let running = false;
-
 async function process() {
-    running = true;
-    if (queue.isEmpty()) return (running = false);
+    if (!queue.isEmpty()) {
+        const task = queue.pop();
 
-    const task = queue.pop();
+        try {
+            task.resolve(await task.fn());
+        } catch (e) {
+            task.reject(e);
+        }
+    }
 
-    task.fn()
-        .then((x) => task.resolve(x))
-        .catch((e) => task.reject(e));
-
-    setTimeout(process);
+    setTimeout(process, 10);
 }
 
 export default function <T>(priority: Priority, fn: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => fn().then(resolve).catch(reject));
-
-    // return new Promise((resolve, reject) => {
-    //     queue.enqueue({ priority, created: Date.now(), fn, resolve, reject });
-    //     if (!running) process();
-    // });
+    return new Promise((resolve, reject) => {
+        queue.enqueue({ priority, created: Date.now(), fn, resolve, reject });
+    });
 }
+
+process();
