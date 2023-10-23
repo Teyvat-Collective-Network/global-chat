@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import db, { autoinc } from "../../db.js";
 import { assertLogChannelPermissions, assertObserver } from "../../permissions.js";
 
-export default async function (cmd: ChatInputCommandInteraction, name: string, logs: TextChannel, isPublic: boolean, ignoreFilter: boolean) {
+export default async function (cmd: ChatInputCommandInteraction, name: string, logs: TextChannel, isPublic: boolean, ignoreFilter: boolean, plugins: string[]) {
     await cmd.deferReply({ ephemeral: true });
     await assertObserver(cmd.user);
 
@@ -20,6 +20,7 @@ export default async function (cmd: ChatInputCommandInteraction, name: string, l
         bans: [],
         panic: false,
         ignoreFilter,
+        plugins,
     });
 
     await logs.send(`${cmd.user} created ${isPublic ? "public" : "private"} global channel ${name}. Logs will be posted here.`).catch(() => {});

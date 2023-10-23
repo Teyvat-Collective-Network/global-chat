@@ -7,6 +7,7 @@ export type GlobalChannel = {
     bans: string[];
     panic: boolean;
     ignoreFilter: boolean;
+    plugins?: string[];
 };
 
 export type GlobalConnection = {
@@ -33,4 +34,9 @@ export type GlobalMessage = {
     message: string;
     instances: { channel: string; message: string }[];
     deleted?: boolean;
+};
+
+export type GlobalInfoOnUserRequest = {
+    instances: { channel: string; message: string }[];
+    guilds: string[];
 };

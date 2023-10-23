@@ -10,6 +10,7 @@ export default async function (
     logs: TextChannel | null,
     isPublic: boolean | null,
     ignoreFilter: boolean | null,
+    plugins: string[] | null,
 ) {
     await cmd.deferReply({ ephemeral: true });
     await assertObserver(cmd.user);
@@ -24,12 +25,13 @@ export default async function (
         await assertLogChannelPermissions(logs);
     }
 
-    const $set: { name?: string; logs?: string; public?: boolean; ignoreFilter?: boolean } = {};
+    const $set: { name?: string; logs?: string; public?: boolean; ignoreFilter?: boolean; plugins?: string[] } = {};
 
     if (name) $set.name = name;
     if (logs) $set.logs = logs.id;
     if (isPublic !== null) $set.public = isPublic;
     if (ignoreFilter !== null) $set.ignoreFilter = ignoreFilter;
+    if (plugins !== null) $set.plugins = plugins;
 
     await db.channels.updateOne({ id }, { $set });
 
@@ -37,6 +39,10 @@ export default async function (
         $set.logs ? `- **Log Channel:** <#${doc.logs}> :arrow_right: <#${$set.logs}>\n` : ""
     }${$set.public !== undefined ? `- **Public**: \`${doc.public}\` :arrow_right: \`${$set.public}\`\n` : ""}${
         $set.ignoreFilter !== undefined ? `- **Ignore Filter**: \`${doc.ignoreFilter}\` :arrow_right: \`${$set.ignoreFilter}\`\n` : ""
+    }${
+        $set.plugins !== undefined
+            ? `- **Plugins**: \`${(doc?.plugins ?? []).join(", ") || "(none)"}\` :arrow_right: \`${$set.plugins.join(", ") || "(none)"}\`\n`
+            : ""
     }`;
 
     await log(doc, `${cmd.user} u${text}`);

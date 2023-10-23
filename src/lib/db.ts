@@ -1,5 +1,5 @@
 import { Db, MongoClient } from "mongodb";
-import { GlobalChannel, GlobalConnection, GlobalMessage, GlobalUser } from "./types.js";
+import { GlobalChannel, GlobalConnection, GlobalInfoOnUserRequest, GlobalMessage, GlobalUser } from "./types.js";
 
 let _db: Db;
 let client: MongoClient;
@@ -33,6 +33,10 @@ class Collections {
 
     public get filter() {
         return _db.collection<{ match: string }>("global_filter");
+    }
+
+    public get info_on_user_requests() {
+        return _db.collection<GlobalInfoOnUserRequest>("global_info_on_user_requests");
     }
 }
 

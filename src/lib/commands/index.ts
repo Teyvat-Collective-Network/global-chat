@@ -48,6 +48,11 @@ export default [
                                 name: "ignore-filter",
                                 description: "if true, the global chat automod filter will not be applied (default: false)",
                             },
+                            {
+                                type: ApplicationCommandOptionType.String,
+                                name: "plugins",
+                                description: "a space-separated list of plugins (default: none, - to remove all)",
+                            },
                         ],
                     },
                     {
@@ -84,6 +89,11 @@ export default [
                                 type: ApplicationCommandOptionType.Boolean,
                                 name: "ignore-filter",
                                 description: "if true, the global chat automod filter will not be applied",
+                            },
+                            {
+                                type: ApplicationCommandOptionType.String,
+                                name: "plugins",
+                                description: "a space-separated list of plugins (- to remove all)",
                             },
                         ],
                     },

@@ -29,6 +29,7 @@ import confirmPanic from "./components/confirm-panic.js";
 import logger from "./logger.js";
 import reply from "./reply.js";
 import { failure, success } from "./responses.js";
+import infoOnUserDeclareNone from "./components/info-on-user-declare-none.js";
 
 bot.on(Events.InteractionCreate, async (interaction) => {
     try {
@@ -53,6 +54,7 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                                   opts.getChannel("logs", true) as TextChannel,
                                   opts.getBoolean("public") ?? true,
                                   opts.getBoolean("ignore-filter") ?? false,
+                                  (opts.getString("plugins") ?? "").split(/\s+/).filter((x) => x && x !== "-"),
                               )
                             : key === "channels/edit"
                             ? await channelsEdit(
@@ -62,6 +64,10 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                                   opts.getChannel("logs") as TextChannel | null,
                                   opts.getBoolean("public"),
                                   opts.getBoolean("ignore-filter"),
+                                  opts
+                                      .getString("plugins")
+                                      ?.split(/\s+/)
+                                      ?.filter((x) => x && x !== "-") ?? null,
                               )
                             : key === "channels/delete"
                             ? await channelsDelete(interaction, opts.getInteger("channel", true))
@@ -126,7 +132,9 @@ bot.on(Events.InteractionCreate, async (interaction) => {
             const [id, ...args] = interaction.customId.split(":");
 
             response =
-                id === "cancel"
+                id === "delete"
+                    ? void (await interaction.message.delete().catch(() => {}))
+                    : id === "cancel"
                     ? await cancel(interaction)
                     : id === "channels/delete"
                     ? await confirmChannelsDelete(interaction, +args[0])
@@ -134,6 +142,8 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                     ? await confirmDisconnect(interaction)
                     : id === "panic"
                     ? await confirmPanic(interaction)
+                    : id === "info-on-user-declare-none"
+                    ? await infoOnUserDeclareNone(interaction)
                     : undefined;
         }
 

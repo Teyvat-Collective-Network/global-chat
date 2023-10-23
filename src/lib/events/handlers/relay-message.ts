@@ -1,4 +1,4 @@
-import { ChannelType, Events, MessageType } from "discord.js";
+import { ButtonStyle, ChannelType, ComponentType, Events, Message, MessageFlags, MessageReplyOptions, MessageType } from "discord.js";
 import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
@@ -78,5 +78,92 @@ bot.on(Events.MessageCreate, async (message) => {
             message: message.id,
             instances: messages.filter((x) => x).map((x) => ({ channel: x!.channelId, message: x!.id })),
         });
+
+        (async () => {
+            if (!channel.plugins?.includes("info-on-user-prompts")) return;
+            if (!message.content.match(/any.*info.*[1-9][0-9]{16,19}/m)) return;
+
+            const reply = await message.reply({
+                components: [
+                    {
+                        type: ComponentType.ActionRow,
+                        components: [
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Success,
+                                customId: "create-info-on-user",
+                                label: "Set up info-on-user request utility",
+                            },
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Danger,
+                                customId: "delete",
+                                label: "No thanks (5m)",
+                            },
+                        ],
+                    },
+                ],
+                flags: [MessageFlags.SuppressNotifications],
+            });
+
+            const response = await reply
+                .awaitMessageComponent({
+                    time: 5 * 60 * 1000,
+                    filter: (x) => x.user.id === message.author.id,
+                    componentType: ComponentType.Button,
+                })
+                .catch(() => void reply.delete());
+
+            if (response?.customId !== "create-info-on-user") return;
+            await response.message.delete().catch(() => {});
+
+            const doc = await db.messages.findOne({ message: response.message.reference!.messageId });
+            if (!doc) return;
+
+            const data: MessageReplyOptions = {
+                embeds: [
+                    {
+                        title: "Info-on-User Request",
+                        description: `Reported no info: ${await fetchGuildName(message.guild!)}`,
+                        footer: { text: "Click below to report no info from your server." },
+                    },
+                ],
+                components: [
+                    {
+                        type: ComponentType.ActionRow,
+                        components: [
+                            { type: ComponentType.Button, style: ButtonStyle.Secondary, customId: "info-on-user-declare-none", label: "No Info Here (1)" },
+                        ],
+                    },
+                ],
+                flags: [MessageFlags.SuppressNotifications],
+            };
+
+            const prompts: (Message | undefined | void)[] = await Promise.all(
+                doc.instances.map(async (instance) => {
+                    try {
+                        const connection = connections.find((x) => x.channel === instance.channel);
+                        if (!connection) return;
+
+                        const channel = await bot.channels.fetch(instance.channel);
+                        if (channel?.type !== ChannelType.GuildText) return;
+
+                        const linked = await channel.messages.fetch(instance.message).catch(() => {});
+                        if (!linked) return;
+
+                        return await linked.reply(data);
+                    } catch (error) {
+                        logger.error(error, "bd157def-80a6-4fef-adbe-9ecf5006357d");
+                    }
+                }),
+            );
+
+            prompts.push(await message.reply(data).catch(() => {}));
+
+            await db.info_on_user_requests.insertOne({
+                instances: prompts.filter((x) => x).map((x) => ({ channel: x!.channelId, message: x!.id })),
+                guilds: [message.guildId!],
+            });
+        })();
     });
 });
