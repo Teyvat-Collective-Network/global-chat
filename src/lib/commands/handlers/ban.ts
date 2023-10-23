@@ -14,6 +14,15 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
 
         if (cmd.user.id === user.id) throw "You cannot ban yourself.";
 
+        let mod = false;
+
+        try {
+            await assertMod(user, id);
+            mod = true;
+        } catch {}
+
+        if (mod) throw "You cannot ban global mods or observers. If necessary, report their behavior to an observer.";
+
         const doc = await db.connections.findOneAndUpdate({ id, guild: cmd.guildId! }, { $addToSet: { bans: user.id } });
         if (!doc) throw `This server is not connected to ${channel!.name}, so you cannot ban the user locally.`;
         if (doc.bans.includes(user.id)) throw `${user} is already banned from ${channel!.name} in this server.`;
@@ -25,6 +34,15 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
         await assertMod(cmd.user, id);
 
         if (cmd.user.id === user.id) throw "You cannot ban yourself.";
+
+        let mod = false;
+
+        try {
+            await assertMod(user, id);
+            mod = true;
+        } catch {}
+
+        if (mod) throw "You cannot ban global mods or observers. If necessary, report their behavior to an observer.";
 
         const doc = await db.channels.findOneAndUpdate({ id }, { $addToSet: { bans: user.id } });
         if (doc!.bans.includes(user.id)) throw `${user} is already banned from ${channel!.name} everywhere.`;

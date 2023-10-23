@@ -392,6 +392,41 @@ export default [
                     },
                 ],
             },
+            {
+                type: ApplicationCommandOptionType.Subcommand,
+                name: "send",
+                description: "send a message anonymously or send embeds",
+                options: [
+                    {
+                        type: ApplicationCommandOptionType.Integer,
+                        name: "as",
+                        description: "the display name / appearance to use",
+                        required: true,
+                        choices: [
+                            { name: "myself", value: 0 },
+                            { name: "global mod", value: 1 },
+                            { name: "observer", value: 2 },
+                        ],
+                    },
+                    {
+                        type: ApplicationCommandOptionType.Integer,
+                        name: "mode",
+                        description: "the mode for inputting your content",
+                        required: true,
+                        choices: [
+                            { name: "direct (specify the content field)", value: 0 },
+                            { name: "advanced (edit a message with embeds)", value: 1 },
+                        ],
+                    },
+                    {
+                        type: ApplicationCommandOptionType.String,
+                        name: "input",
+                        description: "the content to send (direct mode) / a TCN embed tool share link (advanced mode)",
+                        required: true,
+                        maxLength: 2000,
+                    },
+                ],
+            },
         ],
     },
     {

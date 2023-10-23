@@ -1,5 +1,5 @@
 import { diffWords } from "diff";
-import { ChannelType, Events, MessageType } from "discord.js";
+import { ChannelType, Events } from "discord.js";
 import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
@@ -14,7 +14,6 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
     const message = await _message.fetch();
 
     if (message.channel.type !== ChannelType.GuildText) return;
-    if (message.webhookId && message.type !== MessageType.ChatInputCommand && message.type !== MessageType.ContextMenuCommand) return;
     if (message.flags.has("SuppressNotifications")) return;
 
     const doc = await db.messages.findOne({ channel: message.channelId, message: message.id });

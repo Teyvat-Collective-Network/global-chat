@@ -38,6 +38,10 @@ class Collections {
     public get info_on_user_requests() {
         return _db.collection<GlobalInfoOnUserRequest>("global_info_on_user_requests");
     }
+
+    public get webhooks() {
+        return _db.collection<{ id: string }>("global_webhooks");
+    }
 }
 
 const db = new Collections();

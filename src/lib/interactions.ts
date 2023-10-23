@@ -20,16 +20,17 @@ import nickname from "./commands/handlers/nickname.js";
 import panic from "./commands/handlers/panic.js";
 import purgeMessage from "./commands/handlers/purge-message.js";
 import scan from "./commands/handlers/scan.js";
+import sendAs from "./commands/handlers/send-as.js";
 import unban from "./commands/handlers/unban.js";
 import unpanic from "./commands/handlers/unpanic.js";
 import cancel from "./components/cancel.js";
 import confirmChannelsDelete from "./components/confirm-channels-delete.js";
 import confirmDisconnect from "./components/confirm-disconnect.js";
 import confirmPanic from "./components/confirm-panic.js";
+import infoOnUserDeclareNone from "./components/info-on-user-declare-none.js";
 import logger from "./logger.js";
 import reply from "./reply.js";
 import { failure, success } from "./responses.js";
-import infoOnUserDeclareNone from "./components/info-on-user-declare-none.js";
 
 bot.on(Events.InteractionCreate, async (interaction) => {
     try {
@@ -111,6 +112,8 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                             ? await purgeMessage(interaction, opts.getString("message", true))
                             : key === "author"
                             ? await author(interaction, opts.getString("message", true))
+                            : key === "send"
+                            ? await sendAs(interaction, opts.getInteger("as", true), opts.getInteger("mode", true), opts.getString("input", true))
                             : undefined;
                 }
             } else if (interaction.commandType === ApplicationCommandType.Message) {

@@ -3,35 +3,42 @@ import { maybeFilter } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
-import { RELAY_CHANNEL_PERMISSIONS_ESSENTIAL } from "../../permissions.js";
+import { RELAY_CHANNEL_PERMISSIONS_ESSENTIAL, assertMod } from "../../permissions.js";
 import Priority from "../../priority.js";
 import queue from "../../queue.js";
-import { constructMessages, fetchGuildName, fetchName, getConnection, getWebhook } from "../../utils.js";
+import { constructMessages, fetchGuildName, fetchName, getConnection, getWebhook, isUsedWebhook } from "../../utils.js";
 
 bot.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
-    if (message.webhookId && message.type !== MessageType.ChatInputCommand && message.type !== MessageType.ContextMenuCommand) return;
+    if (message.webhookId && (await isUsedWebhook(message.webhookId))) return;
 
     const id = await getConnection(message.channelId).catch(() => {});
     if (!id) return;
 
     const doc = await db.connections.findOne({ id, guild: message.guildId! });
     if (!doc) return;
-    if (doc?.suspended) return;
+    if (doc.suspended) return;
 
     await queue(Priority.RELAY, async () => {
         const channel = await db.channels.findOne({ id });
         if (!channel) return;
-        if (channel.panic) return;
+
+        if (channel.panic)
+            try {
+                await assertMod(message.author, id);
+            } catch {
+                return;
+            }
+
         if (channel.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
         const source = await db.connections.findOne({ id, guild: message.guild!.id });
         if (!source) return;
         if (source.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
-        if (await maybeFilter(channel, message)) return;
+        if (await maybeFilter(channel, message, true)) return;
 
-        if (message.flags.has("SuppressNotifications")) return;
+        if (message.flags.has(MessageFlags.SuppressNotifications)) return;
         if (![MessageType.ChatInputCommand, MessageType.ContextMenuCommand, MessageType.Default, MessageType.Reply].includes(message.type)) return;
 
         const connections = await db.connections.find({ id, guild: { $ne: message.guildId! }, suspended: false, bans: { $ne: message.author.id } }).toArray();

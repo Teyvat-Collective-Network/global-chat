@@ -5,6 +5,7 @@ import {
     GuildMember,
     Message,
     MessageCreateOptions,
+    MessageFlags,
     MessagePayload,
     MessageType,
     PartialMessage,
@@ -17,6 +18,7 @@ import api from "./api.js";
 import bot from "./bot.js";
 import db from "./db.js";
 import logger from "./logger.js";
+import { greyButton } from "./responses.js";
 import stickerCache from "./sticker-cache.js";
 import { GlobalChannel, GlobalConnection, GlobalMessage } from "./types.js";
 
@@ -68,10 +70,40 @@ export async function fetchGuildName(guild: Guild | string) {
     return apiGuild?.name ?? (typeof guild === "string" ? `Unknown Guild ${guild}` : guild.name);
 }
 
+let usedWebhooks = new Set<string>();
+let loaded = false;
+let loading = false;
+
+export async function isUsedWebhook(id: string) {
+    if (!loaded) {
+        const val = (await db.webhooks.countDocuments({ id })) > 0;
+
+        if (!loading) {
+            loading = true;
+
+            db.webhooks
+                .find()
+                .toArray()
+                .then((x) => ((usedWebhooks = new Set(x.map((x) => x.id))), (loaded = true)));
+        }
+
+        return val;
+    }
+
+    return usedWebhooks.has(id);
+}
+
 export async function getWebhook(channel: TextChannel) {
     try {
         const webhooks = await channel.fetchWebhooks();
-        const webhook = webhooks.filter((x) => x.token).first() ?? (await channel.createWebhook({ name: "TCN Global Chat" }));
+        const webhook =
+            webhooks
+                .filter((x) => x.token)
+                .sort((x, y) => (x.applicationId ? 1 : 0) - (y.applicationId ? 1 : 0))
+                .first() ?? (await channel.createWebhook({ name: "TCN Global Chat" }));
+
+        usedWebhooks.add(webhook.id);
+        await db.webhooks.updateOne({ id: webhook.id }, { $set: { id: webhook.id } }, { upsert: true });
 
         return webhook;
     } catch {}
@@ -82,38 +114,42 @@ export async function constructMessages(
     configs: (Pick<GlobalConnection, "replyStyle" | "showServers" | "showTag"> & { channel?: string; noReply?: boolean })[],
 ): Promise<WebhookMessageCreateOptions[]> {
     const data: WebhookMessageCreateOptions[] = [];
-    const base: WebhookMessageCreateOptions = {};
+    const base: WebhookMessageCreateOptions = { content: "", embeds: [], files: [], components: [] };
 
-    if (message.content) base.content = message.content.slice(0, 2000);
+    if ([MessageType.ChatInputCommand, MessageType.ContextMenuCommand].includes(message.type ?? 0) && message.flags.has(MessageFlags.Loading))
+        base.components = greyButton("Loading command response...");
+    else {
+        if (message.content) base.content = message.content.slice(0, 2000);
 
-    const attachments: AttachmentPayload[] = [];
+        const attachments: AttachmentPayload[] = [];
 
-    for (const attachment of message.attachments.values()) attachments.push({ attachment: attachment.url, name: attachment.name });
+        for (const attachment of message.attachments.values()) attachments.push({ attachment: attachment.url, name: attachment.name });
 
-    let failed = false;
+        let failed = false;
 
-    for (const sticker of message.stickers.values()) {
-        if (attachments.length >= 10) break;
+        for (const sticker of message.stickers.values()) {
+            if (attachments.length >= 10) break;
 
-        try {
-            const path = await stickerCache.fetch(sticker);
-            if (!path) throw 0;
-            if (fstatSync(openSync(path, "r")).size === 0) throw 0;
+            try {
+                const path = await stickerCache.fetch(sticker);
+                if (!path) throw 0;
+                if (fstatSync(openSync(path, "r")).size === 0) throw 0;
 
-            attachments.push({ attachment: path, name: `${sticker.name}.${stickerCache.ext(sticker)}` });
-        } catch (error) {
-            failed = true;
-            if (error !== 0) logger.error(error, "870af069-c4a5-4f5a-b24d-6f76bd2c5690");
+                attachments.push({ attachment: path, name: `${sticker.name}.${stickerCache.ext(sticker)}` });
+            } catch (error) {
+                failed = true;
+                if (error !== 0) logger.error(error, "870af069-c4a5-4f5a-b24d-6f76bd2c5690");
+            }
         }
+
+        base.files = attachments;
+
+        if (message.embeds) base.embeds = message.embeds.filter((embed) => embed.data.type === EmbedType.Rich).map((embed) => embed.toJSON());
+        else base.embeds = [];
+
+        if (failed && base.embeds.length < 10)
+            base.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
     }
-
-    base.files = attachments;
-
-    if (message.embeds) base.embeds = message.embeds.filter((embed) => embed.data.type === EmbedType.Rich).map((embed) => embed.toJSON());
-    else base.embeds = [];
-
-    if (failed && base.embeds.length < 10)
-        base.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
 
     let _ref: Message | undefined;
     let doc: GlobalMessage | undefined | null;
