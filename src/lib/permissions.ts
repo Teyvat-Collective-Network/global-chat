@@ -13,6 +13,7 @@ const LOG_CHANNEL_PERMISSIONS_MAP = {
 
 const RELAY_CHANNEL_PERMISSIONS_MAP = {
     [`${PermissionsBitField.Flags.ViewChannel}`]: "View Channel",
+    [`${PermissionsBitField.Flags.SendMessages}`]: "Send Messages",
     [`${PermissionsBitField.Flags.ReadMessageHistory}`]: "Read Message History",
     [`${PermissionsBitField.Flags.EmbedLinks}`]: "Embed Links",
     [`${PermissionsBitField.Flags.AttachFiles}`]: "Attach Files",
