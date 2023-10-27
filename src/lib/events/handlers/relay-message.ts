@@ -88,7 +88,7 @@ bot.on(Events.MessageCreate, async (message) => {
 
         (async () => {
             if (!channel.plugins?.includes("info-on-user-prompts")) return;
-            if (!message.content.match(/any.*info.*[1-9][0-9]{16,19}/m)) return;
+            if (!message.content.match(/info.*on.*[1-9][0-9]{16,19}/im)) return;
 
             const reply = await message.reply({
                 components: [
