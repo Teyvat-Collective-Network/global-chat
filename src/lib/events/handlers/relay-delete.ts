@@ -33,6 +33,7 @@ bot.on(Events.MessageDelete, async (message) => {
 
         const user = (guild && (await guild.members.fetch(doc.author).catch(() => {}))) ?? (await bot.users.fetch(doc.author).catch(() => {}));
 
-        await log(doc.id, await addProfile(toLog, user, guild, true, true));
+        const logged = await log(doc.id, await addProfile(toLog, user, guild, true, true));
+        if (logged) await db.messages.updateOne({ _id: doc._id }, { $push: { logs: { channel: logged.channelId, message: logged.id } } });
     }
 });

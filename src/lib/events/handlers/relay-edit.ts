@@ -66,7 +66,10 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
                 })
                 .join("");
 
-            if (diff) await log(doc.id, await addProfile({ content: diff }, message.member ?? message.author, message.guild, true, true));
+            if (diff) {
+                const logged = await log(doc.id, await addProfile({ content: diff }, message.member ?? message.author, message.guild, true, true));
+                if (logged) await db.messages.updateOne({ _id: doc._id }, { $push: { logs: { channel: logged.channelId, message: logged.id } } });
+            }
         }
     });
 });

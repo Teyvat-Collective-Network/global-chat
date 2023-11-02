@@ -42,8 +42,8 @@ export async function log(obj: number | GlobalChannel | string, payload: string 
 
         const webhook = await getWebhook(channel);
 
-        if (webhook) await webhook.send(payload);
-        else await channel.send(payload);
+        if (webhook) return await webhook.send(payload);
+        else return await channel.send(payload);
     } catch (error) {
         logger.error(error, "515e05cc-1a86-4fdf-9f83-5c74d5fb7e2b");
     }

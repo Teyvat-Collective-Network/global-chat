@@ -7,7 +7,7 @@ export default async function (cmd: ChatInputCommandInteraction | MessageContext
 
     if (!message.match(/^\d+$/)) throw "That is not a valid Discord message ID.";
 
-    const doc = await db.messages.findOne({ $or: [{ message }, { instances: { $elemMatch: { message } } }] });
+    const doc = await db.messages.findOne({ $or: [{ message }, { instances: { $elemMatch: { message } } }, { logs: { $elemMatch: { message } } }] });
     if (!doc) throw "That is not a global chat message.";
 
     const user = await bot.users.fetch(doc.author).catch(() => {});
