@@ -43,7 +43,15 @@ bot.on(Events.MessageCreate, async (message) => {
 
         const connections = await db.connections.find({ id, guild: { $ne: message.guildId! }, suspended: false, bans: { $ne: message.author.id } }).toArray();
 
-        const copies = Object.fromEntries((await constructMessages(message, connections)).map((x, i) => [connections[i].channel, x]));
+        const tracker = { failedStickers: false };
+        const copies = Object.fromEntries((await constructMessages(message, connections, tracker)).map((x, i) => [connections[i].channel, x]));
+
+        if (tracker.failedStickers)
+            message.reply({
+                content:
+                    "Hey! Your sticker could not be converted into an image to send to other servers. They will receive a notice that your sticker did not work, and the rest of your message was still relayed.",
+                flags: [MessageFlags.SuppressNotifications],
+            });
 
         const avatarURL = (message.member ?? message.author).displayAvatarURL();
         const usernameWithTag = await fetchName(message.member ?? message.author, true);

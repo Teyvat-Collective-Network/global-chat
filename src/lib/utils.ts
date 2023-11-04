@@ -112,6 +112,7 @@ export async function getWebhook(channel: TextChannel) {
 export async function constructMessages(
     message: Message | PartialMessage,
     configs: (Pick<GlobalConnection, "replyStyle" | "showServers" | "showTag"> & { channel?: string; noReply?: boolean })[],
+    tracker?: { failedStickers?: boolean },
 ): Promise<WebhookMessageCreateOptions[]> {
     const data: WebhookMessageCreateOptions[] = [];
     const base: WebhookMessageCreateOptions = { content: "", embeds: [], files: [], components: [] };
@@ -147,8 +148,15 @@ export async function constructMessages(
         if (message.embeds) base.embeds = message.embeds.filter((embed) => embed.data.type === EmbedType.Rich).map((embed) => embed.toJSON());
         else base.embeds = [];
 
-        if (failed && base.embeds.length < 10)
-            base.embeds.push({ description: "One or more stickers was not able to be converted to an image to be relayed.", color: 0x2b2d31 });
+        if (failed) {
+            if (base.embeds.length < 10)
+                base.embeds.push({
+                    description: "This message contained a sticker that was not able to be converted to an image to be relayed.",
+                    color: 0x2b2d31,
+                });
+
+            if (tracker) tracker.failedStickers = true;
+        }
     }
 
     let _ref: Message | undefined;
