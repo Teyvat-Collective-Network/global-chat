@@ -320,15 +320,6 @@ export default [
                 description: "show info about global chat",
                 options: [
                     {
-                        type: ApplicationCommandOptionType.String,
-                        name: "page",
-                        description: "the page to show",
-                        choices: [
-                            { name: "General Help Page / FAQ", value: "faq" },
-                            { name: "Rules & Guidelines", value: "rules" },
-                        ],
-                    },
-                    {
                         type: ApplicationCommandOptionType.Boolean,
                         name: "public",
                         description: "if true, make the reply visible to other users",
