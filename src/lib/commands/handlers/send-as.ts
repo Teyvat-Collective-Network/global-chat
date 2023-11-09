@@ -114,7 +114,7 @@ export default async function (cmd: ChatInputCommandInteraction, as: number, mod
 
                     return await webhook.send(data(connection));
                 } catch (error) {
-                    logger.error(error, "eb4afe59-fbc5-48b4-bc2d-af991ef04679");
+                    logger.error(error, "47ec3f19-ddd2-4c2a-89e7-33c6c33efd98");
                 }
             }),
         );

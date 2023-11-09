@@ -81,6 +81,7 @@ bot.on(Events.MessageCreate, async (message) => {
                     });
                 } catch (error) {
                     logger.error(error, "eb4afe59-fbc5-48b4-bc2d-af991ef04679");
+                    logger.error(`Origin: ${message.url}`);
                 }
             }),
         );
