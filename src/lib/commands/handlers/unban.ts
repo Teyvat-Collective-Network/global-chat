@@ -22,7 +22,8 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
 
         return `${user} has been unbanned from ${channel!.name} in this server (does not override global bans).`;
     } else {
-        await assertMod(cmd.user, id);
+        if (channel!.plugins?.includes("local-mods-can-ban")) await assertLocalBan(cmd);
+        else await assertMod(cmd.user, id);
 
         if (cmd.user.id === user.id) throw "You cannot unban yourself.";
 
