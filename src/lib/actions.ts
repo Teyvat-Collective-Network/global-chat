@@ -92,16 +92,31 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
     const [toLog] = await constructMessages(message, [{ replyStyle: "text", showServers: true, showTag: true, noReply: true }]);
     toLog.content = `**[blocked]** ${toLog.content ?? ""}`.slice(0, 2000);
 
-    toLog.embeds = blockedObserverName
+    toLog.embeds = accountTooYoung
+        ? [
+              {
+                  title: "Account Joined Too Recently",
+                  description:
+                      "This message was blocked because the user joined the originating server less than half an hour before attempting to send this message.",
+                  color: 0x2b2d31,
+              },
+          ]
+        : blockedObserverName
         ? [
               {
                   title: "Blocked Observer Name",
-                  description: accountTooYoung
-                      ? "This message was blocked because the user joined the originating server less than half an hour before attempting to send this message."
-                      : `This message was blocked because the user's tag or display name (\`${match}\`) contains the word \`observer\`, but they are not an observer.`,
+                  description: `This message was blocked because the user's tag or display name (\`${match}\`) contains the word \`observer\`, but they are not an observer.`,
+                  color: 0x2b2d31,
               },
           ]
-        : [{ title: "Blocked Term", description: match, color: 0x2b2d31 }, ...(toLog.embeds ?? [])].slice(0, 10);
+        : [
+              {
+                  title: "Blocked Term",
+                  description: match,
+                  color: 0x2b2d31,
+              },
+              ...(toLog.embeds ?? []),
+          ].slice(0, 10);
 
     await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
     await message.delete().catch(() => {});
