@@ -32,8 +32,18 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
 
     let match = getMatch(message.content);
     let blockedObserverName = false;
+    let accountTooYoung = false;
 
     if (!match && isNewMessage) {
+        if (message.member?.joinedTimestamp && Date.now() - message.member.joinedTimestamp < 30 * 60 * 1000 && !channel.mods.includes(message.author.id)) {
+            try {
+                await assertObserver(message.author);
+            } catch {
+                match ||= "-";
+                accountTooYoung = true;
+            }
+        }
+
         if (message.author.tag.match(/observer/i))
             try {
                 await assertObserver(message.author);
@@ -67,7 +77,9 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
                 {
                     title: "Blocked Message",
                     description: `${
-                        blockedObserverName
+                        accountTooYoung
+                            ? "Your message was blocked because you joined the server too recently. Please wait until half an hour has passed since you joined the server to use global chat here."
+                            : blockedObserverName
                             ? `Your message was blocked because your tag or display name (\`${match}\`) contains the word \`observer\` and you are not an observer.`
                             : `Your message was blocked due to the following term: \`${match}\`.`
                     } If you believe this is a mistake, please contact an observer to review this filter rule.`,
@@ -84,7 +96,9 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
         ? [
               {
                   title: "Blocked Observer Name",
-                  description: `This message was blocked because the user's tag or display name (\`${match}\`) contains the word \`observer\`, but they are not an observer.`,
+                  description: accountTooYoung
+                      ? "This message was blocked because the user joined the originating server less than half an hour before attempting to send this message."
+                      : `This message was blocked because the user's tag or display name (\`${match}\`) contains the word \`observer\`, but they are not an observer.`,
               },
           ]
         : [{ title: "Blocked Term", description: match, color: 0x2b2d31 }, ...(toLog.embeds ?? [])].slice(0, 10);
