@@ -23,12 +23,22 @@ bot.on(Events.MessageCreate, async (message) => {
         const channel = await db.channels.findOne({ id });
         if (!channel) return;
 
-        if (channel.panic)
-            try {
-                await assertMod(message.author, id);
-            } catch {
-                return;
-            }
+        if (message.member?.joinedTimestamp && Date.now() - message.member.joinedTimestamp < 30 * 60 * 1000 && !channel.mods.includes(message.author.id)) {
+            await message.delete().catch(() => {});
+
+            return await message.author
+                .send({
+                    embeds: [
+                        {
+                            title: "Blocked Message",
+                            description:
+                                "Your message was blocked because you joined the server too recently. Please wait until half an hour has passed since you joined the server to use global chat here.",
+                            color: 0x2b2d31,
+                        },
+                    ],
+                })
+                .catch(() => {});
+        }
 
         if (channel.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
@@ -37,6 +47,13 @@ bot.on(Events.MessageCreate, async (message) => {
         if (source.bans.includes(message.author.id)) return await message.delete().catch(() => {});
 
         if (await maybeFilter(channel, message, true)) return;
+
+        if (channel.panic)
+            try {
+                await assertMod(message.author, id);
+            } catch {
+                return;
+            }
 
         if (message.flags.has(MessageFlags.SuppressNotifications)) return;
         if (![MessageType.ChatInputCommand, MessageType.ContextMenuCommand, MessageType.Default, MessageType.Reply].includes(message.type)) return;
