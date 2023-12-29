@@ -36,6 +36,8 @@ bot.on(Events.MessageBulkDelete, async (messages) => {
 
     for (const doc of docs) (groups[doc.id] ??= []).push(doc);
 
+    logger.info({ messages: docs.map((doc) => doc.message), origin: messages.first()!.guild!.id });
+
     for (const [id, group] of Object.entries(groups))
         await queue(Priority.DELETE, async () => {
             const connections = await db.connections.find({ id: +id, guild: { $ne: messages.first()!.guildId! } }).toArray();

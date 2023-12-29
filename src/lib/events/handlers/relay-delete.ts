@@ -2,6 +2,7 @@ import { ChannelType, Events, Message } from "discord.js";
 import { relayDelete } from "../../actions.js";
 import bot from "../../bot.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { addProfile, constructMessages, log } from "../../utils.js";
 
 bot.on(Events.MessageDelete, async (message) => {
@@ -23,6 +24,7 @@ bot.on(Events.MessageDelete, async (message) => {
                     if (copy) break;
                 } catch {}
 
+        logger.info({ message: doc.message, origin: message.guild!.id }, "Message Deleted");
         await relayDelete(doc);
 
         const [toLog] = await constructMessages(message, [{ replyStyle: "text", showServers: true, showTag: true, noReply: true }]);
