@@ -7,7 +7,7 @@ let client: MongoClient;
 export async function connect() {
     client = new MongoClient(Bun.env.DB_URI!);
     await client.connect();
-    _db = client.db(Bun.env.DB_NAME);
+    _db = client.db(Bun.env.DB_NAME || undefined);
 }
 
 class Collections {
