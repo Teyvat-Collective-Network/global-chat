@@ -1,5 +1,6 @@
 import { ButtonInteraction } from "discord.js";
 import db from "../db.js";
+import logger from "../logger.js";
 import { log } from "../utils.js";
 
 export default async function (button: ButtonInteraction, id: number) {
@@ -16,5 +17,6 @@ export default async function (button: ButtonInteraction, id: number) {
     } deleted`;
 
     await log(doc, `${button.user} d${text}`);
+    logger.info({ name: doc.name, deletedConnections, deletedMessages }, "cc88234a-8497-4516-bab9-3bf6870de8ac Global channel deleted");
     return `D${text}`;
 }

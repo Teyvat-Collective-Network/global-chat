@@ -2,6 +2,7 @@ import { ButtonInteraction } from "discord.js";
 import api from "../api.js";
 import { channels } from "../bot.js";
 import db from "../db.js";
+import logger from "../logger.js";
 import { assertLocalBan } from "../permissions.js";
 import { getConnection } from "../utils.js";
 
@@ -24,5 +25,6 @@ export default async function (button: ButtonInteraction) {
         allowedMentions: { users: ids },
     });
 
+    logger.info({ user: button.user.id, channel: id }, "a47e5d2e-b922-4514-9545-3c87b0f45cdf Panic confirmed");
     return `${doc!.name} has been put into panic mode / lockdown.`;
 }

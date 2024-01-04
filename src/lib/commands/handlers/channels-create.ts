@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import db, { autoinc } from "../../db.js";
+import logger from "../../logger.js";
 import { assertLogChannelPermissions, assertObserver } from "../../permissions.js";
 
 export default async function (cmd: ChatInputCommandInteraction, name: string, logs: TextChannel, isPublic: boolean, ignoreFilter: boolean, plugins: string[]) {
@@ -24,5 +25,6 @@ export default async function (cmd: ChatInputCommandInteraction, name: string, l
     });
 
     await logs.send(`${cmd.user} created ${isPublic ? "public" : "private"} global channel ${name}. Logs will be posted here.`).catch(() => {});
+    logger.info({ user: cmd.user.id, public: isPublic, name, logs: logs.id }, "c125642c-ca23-4cad-99f7-429e35da4516 Channel created");
     return `Created ${isPublic ? "public" : "private"} global channel ${name} with logging channel ${logs}.`;
 }

@@ -20,7 +20,6 @@ import nickname from "./commands/handlers/nickname.js";
 import panic from "./commands/handlers/panic.js";
 import purgeMessage from "./commands/handlers/purge-message.js";
 import scan from "./commands/handlers/scan.js";
-import sendAs from "./commands/handlers/send-as.js";
 import unban from "./commands/handlers/unban.js";
 import unpanic from "./commands/handlers/unpanic.js";
 import cancel from "./components/cancel.js";
@@ -101,7 +100,7 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                             : key === "connection/edit"
                             ? await connectionEdit(interaction, opts.getString("reply-style"), opts.getBoolean("show-servers"), opts.getBoolean("show-tag"))
                             : key === "help"
-                            ? await help(interaction, opts.getString("page"), opts.getBoolean("public"))
+                            ? await help(interaction, opts.getBoolean("public"))
                             : key === "nickname"
                             ? await nickname(interaction, opts.getString("nickname"))
                             : key === "panic"
@@ -112,8 +111,6 @@ bot.on(Events.InteractionCreate, async (interaction) => {
                             ? await purgeMessage(interaction, opts.getString("message", true))
                             : key === "author"
                             ? await author(interaction, opts.getString("message", true))
-                            : key === "send"
-                            ? await sendAs(interaction, opts.getInteger("as", true), opts.getInteger("mode", true), opts.getString("input", true))
                             : undefined;
                 }
             } else if (interaction.commandType === ApplicationCommandType.Message) {

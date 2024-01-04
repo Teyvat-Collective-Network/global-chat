@@ -14,6 +14,13 @@ bot.on(Events.MessageBulkDelete, async (messages) => {
     messages = messages.filter((x) => !x.flags.has("SuppressNotifications"));
     const ids = messages.map((x) => x.id);
 
+    if (ids.length === 0) return;
+
+    logger.info(
+        { count: ids.length, origin: messages.first()!.guild!.id, channel: messages.first()!.channel.id, ids },
+        "f18b4981-6b76-4b28-91b6-103ff41eac96 Received bulk delete",
+    );
+
     const docs = await db.messages
         .find({
             $and: [
@@ -74,6 +81,8 @@ bot.on(Events.MessageBulkDelete, async (messages) => {
                             linked.forEach((x, i) => x && (copies[idmap[ids[i]]] ??= x));
                             await Promise.all(linked.map((x) => x?.delete().catch((error) => logger.error(error, "472a602f-a5f3-41c4-8f8b-e9caedfd3a83"))));
                         }
+
+                        logger.info({ guild: channel.guild!.id, connection: channel.id }, "cf76dd58-7a2b-4e63-af2c-0d99d444dd3a Purged messages");
                     } catch (error) {
                         logger.error(error, "893fbfa6-2f97-46cf-b49d-ac21238785c0");
                     }

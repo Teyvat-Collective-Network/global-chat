@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, User } from "discord.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { assertLocalBan, assertMod } from "../../permissions.js";
 import { getConnection, log } from "../../utils.js";
 
@@ -8,6 +9,11 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
 
     id = await getConnection(cmd.channelId, id);
     const channel = await db.channels.findOne({ id });
+
+    logger.info(
+        { executor: cmd.user.id, target: user.id, channel: id },
+        "7d0ed965-1117-4199-913b-bac7de7cdd73 Global unban called (this does not mean it worked)",
+    );
 
     if (local) {
         await assertLocalBan(cmd);

@@ -9,6 +9,8 @@ bot.on(Events.MessageDelete, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) return;
     if (message.flags.has("SuppressNotifications")) return;
 
+    logger.info({ message: message.id, origin: message.guild!.id, channel: message.channel.id }, "39781397-4dc7-4b34-922f-a87697dcda7b Received delete");
+
     const doc = await db.messages.findOne({
         $or: [{ channel: message.channelId, message: message.id }, { instances: { channel: message.channelId, message: message.id } }],
     });

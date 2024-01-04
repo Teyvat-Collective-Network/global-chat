@@ -120,6 +120,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
 
     await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
     await message.delete().catch(() => {});
+    logger.info({ accountTooYoung, blockedObserverName, match }, "Filtered message");
     return true;
 }
 

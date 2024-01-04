@@ -1,5 +1,6 @@
 import { ChannelType, ChatInputCommandInteraction } from "discord.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { assertAdmin, assertRelayChannelPermissions, assertTCN, assertUnused } from "../../permissions.js";
 import { log } from "../../utils.js";
 
@@ -32,5 +33,6 @@ export default async function (cmd: ChatInputCommandInteraction, id: number, rep
     });
 
     await log(channel, `${cmd.user} connected ${cmd.channel} to ${channel.name}.`);
+    logger.info({ user: cmd.user.id, channel: id, connection: channel.id }, "92b9f1c3-ecf5-480b-91f3-02c6efd91272 Connection created");
     return `${cmd.channel} is now connected to ${channel.name}!`;
 }

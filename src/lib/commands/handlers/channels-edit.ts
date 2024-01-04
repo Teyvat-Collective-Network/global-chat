@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, TextChannel } from "discord.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { assertLogChannelPermissions, assertObserver } from "../../permissions.js";
 import { log } from "../../utils.js";
 
@@ -47,6 +48,7 @@ export default async function (
 
     await log(doc, `${cmd.user} u${text}`);
     if ($set.logs) await log($set.logs, `${cmd.user} u${text}`);
+    logger.info(`U${text}`);
 
     return `U${text}`;
 }

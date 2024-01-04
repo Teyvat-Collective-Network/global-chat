@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { assertLocalBan } from "../../permissions.js";
 import { confirm } from "../../responses.js";
 import { getConnection } from "../../utils.js";
@@ -10,6 +11,11 @@ export default async function (cmd: ChatInputCommandInteraction) {
 
     const id = await getConnection(cmd.channelId);
     const doc = await db.channels.findOne({ id });
+
+    logger.info(
+        { user: cmd.user.id, guild: cmd.guild!.id, channel: id, ...(doc!.panic ? { error: "Channel already in panic" } : {}) },
+        "Panic initiated (not confirmed)",
+    );
 
     if (doc!.panic) throw "This channel is already in lockdown.";
 
