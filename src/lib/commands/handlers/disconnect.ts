@@ -1,4 +1,5 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import { ChatInputCommandInteraction, TextChannel } from "discord.js";
+import broadcast, { formatObject, formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertAdmin } from "../../permissions.js";
@@ -12,7 +13,15 @@ export default async function (cmd: ChatInputCommandInteraction) {
     const id = await getConnection(cmd.channelId);
     const doc = await db.channels.findOne({ id });
 
-    logger.info({ user: cmd.user.id, guild: cmd.guild!.id, channel: id }, "90e0695b-8d26-41b3-b61f-4adf45f185c9 Disconnect initiated (not confirmed)");
+    logger.info(
+        { user: cmd.user.id, guild: cmd.guild!.id, channel: id },
+        "90e0695b-8d26-41b3-b61f-4adf45f185c9 Disconnect initiated (not confirmed, does not mean it worked)",
+    );
+
+    await broadcast(
+        "Disconnect Initiated (not confirmed)",
+        `${formatUser(cmd.user)} disconnected ${formatObject(cmd.channel! as TextChannel)} from ${doc!.name}`,
+    );
 
     return confirm(
         "disconnect",

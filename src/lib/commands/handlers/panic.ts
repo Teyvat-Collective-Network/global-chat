@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction } from "discord.js";
+import broadcast, { formatObject, formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertLocalBan } from "../../permissions.js";
@@ -16,6 +17,8 @@ export default async function (cmd: ChatInputCommandInteraction) {
         { user: cmd.user.id, guild: cmd.guild!.id, channel: id, ...(doc!.panic ? { error: "Channel already in panic" } : {}) },
         "Panic initiated (not confirmed)",
     );
+
+    await broadcast("Panic Initiated (not confirmed)", `${formatUser(cmd.user)} initiated panic mode on ${doc!.name} from ${formatObject(cmd.guild!)}`);
 
     if (doc!.panic) throw "This channel is already in lockdown.";
 

@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction, User } from "discord.js";
+import broadcast, { formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertObserver } from "../../permissions.js";
@@ -15,5 +16,6 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
 
     await log(doc!, `${cmd.user} removed ${user} as a moderator from ${doc!.name}`);
     logger.info({ executor: cmd.user.id, channel: id, user: user.id }, "5059e73a-1f25-4e7a-b129-9589f8171f4d Mod demoted");
+    await broadcast("Mod Demoted", `${formatUser(cmd.user)} demoted ${formatUser(user)} in ${doc!.name}`);
     return `${user} is no longer a moderator of ${doc!.name}`;
 }

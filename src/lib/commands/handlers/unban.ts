@@ -1,4 +1,6 @@
+import { escapeHTML } from "bun";
 import { ChatInputCommandInteraction, User } from "discord.js";
+import broadcast, { formatObject, formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertLocalBan, assertMod } from "../../permissions.js";
@@ -13,6 +15,13 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
     logger.info(
         { executor: cmd.user.id, target: user.id, channel: id },
         "7d0ed965-1117-4199-913b-bac7de7cdd73 Global unban called (this does not mean it worked)",
+    );
+
+    await broadcast(
+        "Unban initiated (does not mean it worked)",
+        `${formatUser(cmd.user)} unbanned ${formatUser(user)} in ${escapeHTML(channel?.name ?? "Unknown Channel")} from ${formatObject(cmd.guild!)} ${
+            local ? "locally" : "globally"
+        }`,
     );
 
     if (local) {

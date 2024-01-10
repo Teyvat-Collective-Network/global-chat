@@ -3,6 +3,7 @@ import db from "../../db.js";
 import { assertAdmin } from "../../permissions.js";
 import { getConnection, log } from "../../utils.js";
 import logger from "../../logger.js";
+import broadcast, { formatObject, formatUser } from "../../broadcast.js";
 
 export default async function (cmd: ChatInputCommandInteraction) {
     await cmd.deferReply({ ephemeral: true });
@@ -16,5 +17,6 @@ export default async function (cmd: ChatInputCommandInteraction) {
 
     await log(doc!, `${cmd.user} resumed the connection for ${doc!.name} in ${cmd.guild!.name} (${cmd.channel})`);
     logger.info({ user: cmd.user.id, guild: cmd.guild!.name, channel: doc!.name }, "f6ca910d-5a0a-4af1-9433-4a9fa9b278ad Connection unsuspended");
+    await broadcast("Connection Unsuspended", `${formatUser(cmd.user)} unsuspended the connection to ${doc!.name} in ${formatObject(cmd.guild!)}`);
     return "This connection has been resumed. Messages will be relayed in and out.";
 }

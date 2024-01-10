@@ -1,4 +1,5 @@
 import { ChatInputCommandInteraction, TextChannel } from "discord.js";
+import broadcast, { formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertLogChannelPermissions, assertObserver } from "../../permissions.js";
@@ -48,7 +49,11 @@ export default async function (
 
     await log(doc, `${cmd.user} u${text}`);
     if ($set.logs) await log($set.logs, `${cmd.user} u${text}`);
-    logger.info(`U${text}`);
+
+    const plaintext = text.replace("**", "").replace(":arrow_right:", "=>");
+
+    logger.info(`${cmd.user.id} u${plaintext}`);
+    await broadcast("Channel Edited", `Edited by ${formatUser(cmd.user)}`, `U${plaintext}`);
 
     return `U${text}`;
 }

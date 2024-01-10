@@ -1,5 +1,6 @@
-import { ChannelType, Events, Message } from "discord.js";
+import { ChannelType, Events, Message, TextChannel } from "discord.js";
 import bot from "../../bot.js";
+import broadcast, { formatObject } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import Priority from "../../priority.js";
@@ -19,6 +20,12 @@ bot.on(Events.MessageBulkDelete, async (messages) => {
     logger.info(
         { count: ids.length, origin: messages.first()!.guild!.id, channel: messages.first()!.channel.id, ids },
         "f18b4981-6b76-4b28-91b6-103ff41eac96 Received bulk delete",
+    );
+
+    await broadcast(
+        "Received Bulk Delete",
+        `A bulk delete was received from ${formatObject(messages.first()!.guild!)} in ${formatObject(messages.first()!.channel! as TextChannel)}`,
+        `IDs: ${ids.map((id) => `<code>${id}</code>`).join(" ")}`,
     );
 
     const docs = await db.messages

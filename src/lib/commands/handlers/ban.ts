@@ -1,4 +1,6 @@
+import { escapeHTML } from "bun";
 import { ChatInputCommandInteraction, User } from "discord.js";
+import broadcast, { formatObject, formatUser } from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { assertLocalBan, assertMod } from "../../permissions.js";
@@ -11,8 +13,15 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
     const channel = await db.channels.findOne({ id });
 
     logger.info(
-        { executor: cmd.user.id, target: user.id, channel: id },
+        { executor: cmd.user.id, target: user.id, channel: id, local },
         "2dc82439-b181-45a1-becd-01310bfb21f9 Global ban called (this does not mean it worked)",
+    );
+
+    await broadcast(
+        "Ban Initiated (does not mean it worked)",
+        `${formatUser(cmd.user)} banned ${formatUser(user)} from ${escapeHTML(channel?.name ?? "Unknown Channel")} from ${formatObject(cmd.guild!)} ${
+            local ? "locally" : "globally"
+        }`,
     );
 
     if (local) {

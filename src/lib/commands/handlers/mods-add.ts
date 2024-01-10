@@ -1,8 +1,9 @@
 import { ChatInputCommandInteraction, User } from "discord.js";
+import broadcast, { formatUser } from "../../broadcast.js";
 import db from "../../db.js";
+import logger from "../../logger.js";
 import { assertObserver } from "../../permissions.js";
 import { getConnection, log } from "../../utils.js";
-import logger from "../../logger.js";
 
 export default async function (cmd: ChatInputCommandInteraction, user: User, id: number | null) {
     await cmd.deferReply({ ephemeral: true });
@@ -15,5 +16,6 @@ export default async function (cmd: ChatInputCommandInteraction, user: User, id:
 
     await log(doc!, `${cmd.user} promoted ${user} to moderator in ${doc!.name}`);
     logger.info({ executor: cmd.user.id, channel: id, user: user.id }, "d43ab00f-9835-41eb-8e01-e85afb1a79d6 Mod promoted");
+    await broadcast("Mod Promoted", `${formatUser(cmd.user)} promoted ${formatUser(user)} in ${doc!.name}`);
     return `${user} is now a moderator of ${doc!.name}`;
 }

@@ -1,6 +1,7 @@
 import { ChannelType, Events, Message } from "discord.js";
 import { relayDelete } from "../../actions.js";
 import bot from "../../bot.js";
+import broadcast from "../../broadcast.js";
 import db from "../../db.js";
 import logger from "../../logger.js";
 import { addProfile, constructMessages, log } from "../../utils.js";
@@ -10,6 +11,7 @@ bot.on(Events.MessageDelete, async (message) => {
     if (message.flags.has("SuppressNotifications")) return;
 
     logger.info({ message: message.id, origin: message.guild!.id, channel: message.channel.id }, "39781397-4dc7-4b34-922f-a87697dcda7b Received delete");
+    await broadcast("Received Delete", `${message.url} was deleted`);
 
     const doc = await db.messages.findOne({
         $or: [{ channel: message.channelId, message: message.id }, { instances: { channel: message.channelId, message: message.id } }],
