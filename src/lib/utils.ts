@@ -162,6 +162,7 @@ export async function constructMessages(
     let _ref: Message | undefined;
     let doc: GlobalMessage | undefined | null;
     let ref: Message | undefined | null;
+    let noRef = false;
     let author: User | undefined;
     let source: string | undefined;
 
@@ -178,7 +179,7 @@ export async function constructMessages(
             author = (await bot.users.fetch(doc.author).catch(() => {})) ?? undefined;
             source = doc.guild;
         } catch {
-            ref = null;
+            noRef = true;
         }
 
     const authorNameWithTag = author && (await fetchName(author, true));
@@ -189,7 +190,7 @@ export async function constructMessages(
         const copy: WebhookMessageCreateOptions = { ...base };
 
         if (!noReply && doc) {
-            if (ref !== null)
+            if (!noRef)
                 if (doc.channel === channel) ref = await ((await bot.channels.fetch(channel)) as TextChannel).messages.fetch(doc.message);
                 else {
                     const instance = doc.instances.find((x) => x.channel === channel);
