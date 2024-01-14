@@ -19,6 +19,8 @@ bot.on(Events.MessageCreate, async (message) => {
     if (!doc) return;
     if (doc.suspended) return;
 
+    logger.info({ url: message.url }, "7aae991e-79e3-46b5-84c7-0b3ac7c44e96 Queue Relay");
+
     await queue(Priority.RELAY, async () => {
         const channel = await db.channels.findOne({ id });
         if (!channel) return;
