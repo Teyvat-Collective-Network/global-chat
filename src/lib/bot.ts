@@ -4,6 +4,7 @@ const bot = new Client({
     allowedMentions: { parse: [] },
     intents: IntentsBitField.Flags.Guilds | IntentsBitField.Flags.GuildMembers | IntentsBitField.Flags.GuildMessages | IntentsBitField.Flags.MessageContent,
     partials: [Partials.Message],
+    sweepers: { messages: { lifetime: 86400, interval: 600 } },
 });
 
 await bot.login(Bun.env.TOKEN);
