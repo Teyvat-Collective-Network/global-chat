@@ -118,7 +118,18 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
               ...(toLog.embeds ?? []),
           ].slice(0, 10);
 
-    await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
+    const logged = await log(channel, await addProfile(toLog, message.member ?? message.author, message.guild!, true, true));
+
+    if (logged)
+        await db.messages.insertOne({
+            id: channel.id,
+            author: message.author.id,
+            guild: logged.guildId!,
+            channel: logged.channelId,
+            message: logged.id,
+            instances: [],
+        });
+
     await message.delete().catch(() => {});
     logger.info({ accountTooYoung, blockedObserverName, match }, "Filtered message");
     return true;
