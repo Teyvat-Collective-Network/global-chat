@@ -21,7 +21,7 @@ export default async function (
     if (!doc) throw "That global channel does not exist.";
 
     if (logs) {
-        if ((await db.channels.countDocuments({ id: { $neq: id }, logs: logs.id })) >= 1)
+        if ((await db.channels.countDocuments({ id: { $ne: id }, logs: logs.id })) >= 1)
             throw `${logs} is already being used as the logging channel for another global channel.`;
 
         await assertLogChannelPermissions(logs);
