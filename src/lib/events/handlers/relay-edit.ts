@@ -25,7 +25,7 @@ bot.on(Events.MessageUpdate, async (before, _message) => {
         if (channel.bans.includes(message.author.id)) return;
 
         const source = await db.connections.findOne({ id: doc.id, guild: message.guildId! });
-        if (!source) return;
+        if (!source || source.channel !== message.channelId) return;
         if (source.bans.includes(message.author.id)) return;
 
         if (await maybeFilter(channel, message)) return;
