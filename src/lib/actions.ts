@@ -24,7 +24,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
 
         for (const filter of [...scamfilter, ...filters]) {
             if (filter instanceof RegExp) match = input.match(filter)?.[0];
-            else match = input.match((regexes[filter.match] ??= new RegExp(filter.match)))?.[0];
+            else match = input.match((regexes[filter.match] ??= new RegExp(filter.match, "i")))?.[0];
 
             if (match) return match;
         }
@@ -81,7 +81,7 @@ export async function maybeFilter(channel: GlobalChannel, message: Message, isNe
                             ? "Your message was blocked because you joined the server too recently. Please wait until half an hour has passed since you joined the server to use global chat here."
                             : blockedObserverName
                             ? `Your message was blocked because your tag or display name (\`${match}\`) contains the word \`observer\` and you are not an observer.`
-                            : `Your message was blocked due to the following term: \`${match}\`.`
+                            : `Your message was blocked due to the following term (either in your message or name): \`${match}\`.`
                     } If you believe this is a mistake, please contact an observer to review this filter rule.`,
                     color: 0x2b2d31,
                 },
